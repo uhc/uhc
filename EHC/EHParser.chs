@@ -24,6 +24,9 @@
 %%[6_1 import (List)
 %%]
 
+%%[6_1.Scanner -1.Scanner import (EHScanner)
+%%]
+
 %%[7.Scanner -1.Scanner import(EHScanner)
 %%]
 
@@ -88,7 +91,7 @@ keywordsOps   =  [ "=", "\\", show hsnArrow, "::", "@", "...", ".", "|", "*" ]
 %%]
 
 %%[6_1.keywordsOps -6.keywordsOps
-keywordsOps   =  [ "=", "\\", show hsnArrow, "::", "@", "...", ".", "|", "*", "=>", "@" ]
+keywordsOps   =  [ "=", "\\", show hsnArrow, "::", "@", "...", ".", "|", "*", "=>", "@", "(|", "|)"]
 %%]
 
 
@@ -106,6 +109,10 @@ offsideTrigs  =  [ "let", "of" ]
 
 %%[9.offsideTrigs -5.offsideTrigs
 offsideTrigs  =  [ "let", "of", "where" ]
+%%]
+
+%%[6_1.specPairs
+specPairs = ["(|", "|)"]
 %%]
 
 %%[7.specPairs
@@ -138,7 +145,7 @@ offsideScanHandle fn fh
           triggers  = [ reserved x noPos | x <- offsideTrigs ]
 %%]
 
-%%[7.scanHandle -1.scanHandle
+%%[6_1.scanHandle -1.scanHandle
 scanHandle :: [String] -> [String] -> String -> String -> [String] -> FilePath -> Handle -> IO [Token]
 scanHandle keywordstxt keywordsops specchars opchars specpairs fn fh
   = do  {  txt <- hGetContents fh
@@ -459,7 +466,9 @@ pTyExprPrefix   =    sem_TyExpr_Quant
 
 %%[pTyExprPrefix.6.1
                 <|> sem_TyExpr_QualTyExpr <$> 
-                      (pParens (flip sem_PredExpr_LacksExpr <$> pTyExprBase <* pKey "\\" <*> pVarid) <* pKey "=>")
+                      (pParens 
+                        ((\ty l -> sem_PredExpr_LacksExpr (Label l) ty) <$> pTyExprBase <* pKey "\\" <*> pVarid <* pKey "=>")
+                      )
 %%]
 
 %%[pTyExprPrefix.9
@@ -601,7 +610,8 @@ pExpr           =    pExprPrefix <*> pExpr
 %%@pExprBaseCommon.1
 %%@pExprBaseParenProd.1
 %%@pExprBaseCommon.5
-               <|> pKey "aspect" *> pAspect
+               <|> sem_Expr_AspectRoot <$ pKey "aspect" <*> pAspect
+	       <|> pRec
 %%]
 
 %%[7.pExprBase -5.pExprBase
@@ -670,11 +680,6 @@ pTyVar          =    sem_TyVar_Var <$> pVar
 %%% Parser for Apects
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%[7.pAspect
-pAspect   ::   EHParser T_Expr
-pAspect = undefined -- (pList_ng pSemRule)
-%%]
-
 %%[6_1
 pAspect :: EHParser T_Expr
 pAspect = foldr sem_Expr_App emptyAspect <$> pList_ng pSemRule
@@ -690,10 +695,23 @@ pSemRule =  (\p t e -> sem_Expr_App (mkAspectExt p t) e)  <$ pKey "|" <*> pRuleP
 
 mkAspectExt :: Prod -> (String,String) -> T_Expr
 mkAspectExt prod@(Prod con vars) (target,attr)  
-  | isLhs target = sem_Expr_Var (AspExt prod Syn attr)
+  | isLhs target = sem_Expr_Var (ExtAspect prod Syn attr)
   | target `elem` vars = let inh = maybe (error "Impossible occurred") id (elemIndex target vars)
-			 in sem_Expr_Var (AspExt prod (Inh inh) attr)
+			 in sem_Expr_Var (ExtAspect prod (Inh inh) attr)
   | otherwise = error $ "Undefined child " ++ target ++ " of pattern (" ++ con ++ (foldr (\x y -> x ++ (' ':y)) "" vars)  
+
+pRec :: EHParser T_Expr
+pRec = sem_Expr_AppTop <$ pKey "(|" <*> pRecExts <* pKey "|)"
+
+pRecExts :: EHParser T_Expr
+pRecExts = flip (foldr sem_Expr_App) <$> pListSep pComma pRecExt <*> pRecEnding
+
+pRecEnding :: EHParser T_Expr
+pRecEnding = pKey "|" *> pExpr
+  <|> pSucceed (sem_Expr_Var hsnEmptyRec)
+
+pRecExt :: EHParser T_Expr
+pRecExt = (\l e -> sem_Expr_App (sem_Expr_Var (ExtRec l)) e)  <$> pVarid <* pKey "=" <*> pExpr
 %%]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

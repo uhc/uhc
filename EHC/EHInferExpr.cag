@@ -68,10 +68,9 @@ SEM Expr
 
 %%[6_1.lookUpErr
 SEM Expr
-  | Var		loc	    .  lookUpErr	    := case @nm of
-    			       			        (HNm _) -> [Err_NamesNotIntrod [@nm]]
-							(AspExt _ _ _) -> [Err_InvalidAspPat [@nm]]
-							(EmptyAspect) -> [Err_NamesNotIntrod [@nm]]
+  | Var		loc	    .  lookUpErr	    := if isAspExt @nm then [Err_InvalidAspPat [@nm]]
+    			       			       	  	       else [Err_NamesNotIntrod [@nm]]
+
 %%]
 
 %%[2.Var

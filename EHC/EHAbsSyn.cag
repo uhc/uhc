@@ -34,8 +34,7 @@ TYPE Decls          =  [Decl]
 SET AllDecl         =  Decl Decls
 %%]
 
-%%[5
-DATA Decl
+%%[5DATA Decl
   | Data            tyNm            : {HsName}
                     tyVars          : TyVars
                     constrs         : DataConstrs
@@ -95,7 +94,7 @@ DATA TyExpr
   | QualTyExpr predExpr : PredExpr tyExpr : TyExpr
 
 DATA PredExpr
-  | LacksExpr label : {String} tyExpr : TyExpr
+  | LacksExpr label : {Label} tyExpr : TyExpr
   | PartExpr  r1,r2,r : TyExpr
   | KnitExpr  ag,nt,inh,syn : TyExpr
 %%]
@@ -179,6 +178,11 @@ DATA Expr
                     alts            : CaseAlts
 %%]
 
+%%[6_1
+DATA Expr
+  | AspectRoot expr : Expr
+%%]
+
 %%[7
 DATA Expr
   | Rec             recExpr         : RecExpr
@@ -252,6 +256,9 @@ TYPE DataConstrs    =   [DataConstr]
 
 SET AllDataConstr   =   DataConstr DataConstrs
 SET AllData         =   AllDataConstr
+
+DERIVING DataConstr TyExpr PredExpr : Eq
+
 %%]
 
 %%[7 -5.Data

@@ -51,7 +51,11 @@
 %%[6 export(hsnStar)
 %%]
 
-%%[6_1 export(hsnRow,hsnEmptyRow,hsnEmptyRec,hsnRec,hsnRowExt,hsnRecExt,hsnRecSel,hsnJoin,hsnSplit,Dir(..),isLhs,hsnEmptyAspect,Prod(..),isAspExt)
+%%[6_1 export(hsnRow,hsnEmptyRow,hsnEmptyRec,hsnRec,hsnRowExt,hsnRecExt,hsnJoin,hsnRemove,Dir(..),isLhs,hsnEmptyAspect,Prod(..),isAspExt,getAttr,hsnAspect,isRowWrapper,isEmptyCon,isExtRow,isRec,ppListAltSep,isEmptyRec,getLabel,hsnAspRowExt,hsnLabRowExt, Label(..),hsnExtAspect,hsnKnit)
+%%]
+
+
+%%[6_1 import (Debug.Trace)
 %%]
 
 %%[7 export(hsnRow,hsnRec,hsnSum,hsnRowEmpty,hsnIsRec,hsnIsSum)
@@ -94,35 +98,58 @@ instance PP HsName where
 
 %%[6_1.HsName.type -1.HsName.type
 data HsName                         =   HNm String
-                                    |   AspExt Prod Dir String 
-				    |   EmptyAspect deriving Ord
+                                    |   ExtAspect Prod Dir String 
+				    |   EmptyAspect 
+				    |   ExtRec String 
+				    |	ExtRow Label deriving Ord
 
+data Label = Label String | Aspect String Dir String deriving (Ord,Eq)
 data Prod = Prod String [String] deriving Ord
                                     
 instance Eq HsName where
   (HNm a) == (HNm b) = a == b
-  (AspExt p d s) == (AspExt p' d' s') = p == p' && d == d' && s == s'
+  (ExtAspect p d s) == (ExtAspect p' d' s') = p == p' && d == d' && s == s'
   EmptyAspect == EmptyAspect = True
+  (ExtRow l) == (ExtRow l') = l == l'
+  (ExtRec l) == (ExtRec l') = l == l'
   _ == _ = False
 
 instance Eq Prod where
   (Prod p cs) == (Prod p' cs') = p == p' && (length cs) == (length cs')
 
-data Dir = Inh Int | Syn deriving (Eq,Ord)
+data Dir = Syn | Inh Int deriving (Eq,Ord)
 
 instance Show Dir where
-  show (Inh i)     = "inherited"
-  show (Syn)     = "synthesized"
+  show (Inh i)     = "Inh_" ++ show i
+  show (Syn)     = "Syn"
 
 instance Show HsName where
   show (HNm s    )  = s
-  show (AspExt (Prod con vars) Syn attr)  = "| (" ++ con ++ " " ++ unwords vars ++ ") lhs." ++ attr ++ " ="
-  show (AspExt (Prod con vars) (Inh i) attr) = "| (" ++ con ++ " " ++ unwords vars ++ ")" ++ (vars!!i) ++ "." ++ attr ++ " ="
+  show (ExtAspect (Prod con vars) Syn attr)  = "| (" ++ con ++ " " ++ unwords vars ++ ") lhs." ++ attr ++ " ="
+  show (ExtAspect (Prod con vars) (Inh i) attr) = "| (" ++ con ++ " " ++ unwords vars ++ ")" ++ (vars!!i) ++ "." ++attr++ " ="
   show (EmptyAspect) = ""
+  show (ExtRec s) =  s ++ " = "
+  show (ExtRow l) = show l ++ " :: "
 
-isAspExt (AspExt _ _ _) = True
+instance Show Label where
+  show (Label l) = l
+  show (Aspect p dir attr) = p ++ " " ++ show dir ++ " " ++ attr
+
+isAspExt (ExtAspect _ _ _) = True
 isAspExt (EmptyAspect) = True
 isAspExt _ = False
+
+getAttr (ExtAspect _ _ attr) = [attr]
+getAttr _ = []
+
+getLabel (ExtRec s) =  [s]
+getLabel e =  []
+
+isExtRow (ExtRow _) = True
+isExtRow _ = False
+
+isRec (ExtRec _) = True
+isRec hnm = hnm == hsnEmptyRec 
 %%]
 
 %%[7.HsName.type -1.HsName.type
@@ -171,19 +198,28 @@ hsnStar                             =   HNm "*"
 
 %%[6_1.rowHnms
 hsnRow                              =   HNm "row"
-hsnEmptyRow                         =   HNm "EmptyRow"
-hsnRowExt l                         =   HNm ("ExtRow_" ++ l)
-hsnRecExt l                         =   HNm ("extRec_" ++ l)
+hsnEmptyRow                         =   HNm "{| |}"
+hsnLabRowExt l                      =   ExtRow (Label l)
+hsnAspRowExt p dir attr		    =	ExtRow (Aspect p dir attr)
+hsnRowExt l			    =   ExtRow l
+hsnRecExt l                         =   ExtRec l
 hsnEmptyRec                         =   HNm "emptyRec"
+isEmptyRec			    =   (==) hsnEmptyRec
 hsnRec                              =   HNm "Rec"
-hsnRecSel l			    =   HNm ("select_" ++ l)
+isRowWrapper r			    =   r == hsnRec || r == hsnAspect 
 hsnJoin	  			    =   HNm "join"
-hsnSplit			    =   HNm "split"
-
-isLhs ("lhs") = True
-isLhs _       = False
-
-hsnEmptyAspect = EmptyAspect
+hsnRemove			    =   HNm "remove"
+hsnAspect			    =   HNm "Aspect"
+hsnEmptyAspect			    =   EmptyAspect
+hsnExtAspect prod i dir attr	    =   ExtAspect (Prod prod (children i)) dir attr
+isLhs				    =   (==) "lhs"
+isEmptyCon con			    =   con == hsnEmptyRow 
+hsnKnit				    =	HNm "knit"
+ppListAltSep b sep [] = empty
+ppListAltSep b sep (x:xs) = if (not b)
+		            then x >|< ppListAltSep (not b) sep xs
+		            else x >|< sep >|< ppListAltSep (not b) sep xs
+children n = [ 'c' : show i | i <- [0..n]]                            
 %%]
 
 

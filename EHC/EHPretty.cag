@@ -149,27 +149,35 @@ SEM Decl
 SEM TyExpr
   | QualTyExpr  loc . pp = text "(" >|< @predExpr.pp >|< text ")" >#< text "=>" >#< @tyExpr.pp
 SEM PredExpr
-  | LacksExpr   loc . pp = @tyExpr.pp >|< text "\\" >|< text @label
+  | LacksExpr   loc . pp = @tyExpr.pp >|< text "\\" >|< text (show @label)
   | PartExpr    loc . pp = @r1.pp >#< text "+" >#< @r2.pp >#< text "~" >#< @r.pp
   | KnitExpr    loc . pp = text "knit" >#< @ag.pp >#< text "to" >#< @nt.pp >#< @inh.pp >#< @syn.pp
 
-ATTR Expr [ | | isAspect : Bool ]
+ATTR Expr [ | | isAspect : Bool isRec : Bool ]
 SEM Expr
   | Var               loc . isAspect     = isAspExt @nm
+    		      loc . isRec	 = isRec @nm
   | App		      loc . isAspect	 = @func.isAspect || @arg.isAspect
+    		      loc . isRec	 = @func.isRec || @arg.isRec
   | IConst CConst Con lhs . isAspect     = False
+    	   	      lhs . isRec	 = False
+  | AppTop 	      lhs . isRec	 = False
     
 SEM Expr
   | App		loc . pp := if @arg.isAspect then @func.pp  >-< @arg.pp
     		      	      		     else @func.pp >#< @arg.pp
-  | AppTop      loc . pp := @aspect $ ppAppTop  (@expr.appFunNm,@expr.appFunPP)
+  | AppTop      loc . pp := if @expr.isRec then @ppRec
+    		      	       		   else ppAppTop  (@expr.appFunNm,@expr.appFunPP)
                                                   @expr.appArgPPL @expr.pp
-                loc . aspect = if @expr.isAspect then (\x -> "aspect" >-< indent 2 x) else id
+		loc . ppRec  = "{|" >#< ppListAltSep False "," @expr.gatherRecPPL >#< "|}"
+  | AspectRoot  loc . pp = text "aspect" >-< indent 2 @expr.pp
 
-SEM Decl
-  | Val          lhs     .  pp       :=  (@patExpr.pp >#< "=" >#< @aspect @expr.pp)
-    		 loc	 .  aspect   =   if @expr.isAspect then (\x -> "aspect" >-< indent 2 x) else id
- 
+
+ATTR Expr [ | | gatherRecPPL USE {++} {[@pp]} : PP_DocL]
+SEM Expr
+  | App lhs.gatherRecPPL = if @func.isRec then ( @func.gatherRecPPL) ++ @arg.gatherRecPPL else [@pp]  
+  | Var lhs.gatherRecPPL = if isEmptyRec @nm then [text "\b"] else [@pp]
+  | Lam         loc . gatherRecPPL       =   ["\\" >|< @arg.pp >#< "->" >#< @body.pp ]
 %%]
 
 %%[7

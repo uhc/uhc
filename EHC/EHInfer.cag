@@ -117,52 +117,7 @@ SEM AGItf
 ATTR AllDecl AllExpr [ valGam: ValGam | | ]
 
 SEM AGItf
-  | AGItf       expr        .  valGam               =  assocLToGam ((hsnEmptyRec, ValGamInfo tyEmptyRec) :
-    			       			    	  @recExtTys ++ @recSelTys ++ @recOps)
-                loc         .  (recExtTys,labUnqs') =  mkRecExts @labels @labUnqs
-		loc	    .  (recSelTys,jUnqs)       =  mkRecSels @labels @labUnqs'
-		loc	    .  recOps		    =  [joinGamVal (take 3 @jUnqs), splitGamVal (drop 3 @jUnqs)]
-
-
-{
-mkRecExts [] unqs = ([],unqs)
-mkRecExts (l:ls) (t:r:vs) = 
-  let (rs,unqs) = mkRecExts ls vs
-  in ((hsnRecExt l, mkRecExt l (t,r)) : rs, unqs)
-mkRecExt l (t,r) = ValGamInfo $ mkTyQu TyQu_Forall [t,r] 
-                     (mkLacks (l,varR) (mkTyArrow [varT, mkRec varR] (mkRec (mkRowExt l varT varR ))))
-                      where
-                      varT = mkTyVar t
-                      varR = mkTyVar r
-
-mkRecSels [] x = ([],x)
-mkRecSels (l:ls) (t:r:vs) = 
-  let (rs,us) =  mkRecSels ls vs
-  in ((hsnRecSel l, mkRecSel l (t,r)) : rs, us)
-mkRecSel l (t,r) = ValGamInfo $ mkTyQu TyQu_Forall [t,r]
-	 		       (mkTyArrow [mkRec (mkRowExt l varT varR)] varT)
-                      where
-		      varT = mkTyVar t
-		      varR = mkTyVar r
-
-joinGamVal [a,b,c] = (hsnJoin, ValGamInfo $ mkTyQu TyQu_Forall [a,b,c]
-	   	     	       		   (mkPart (varA,varB,varC) (mkTyArrow [mkRec varA, mkRec varB] (mkRec varC))))
-			where
-			varA = mkTyVar a
-			varB = mkTyVar b
-			varC = mkTyVar c
-
-joinGamVal _ = error "joinGamVal"
-
-splitGamVal [a,b,c] = (hsnSplit, ValGamInfo $ mkTyQu TyQu_Forall [a,b,c]
-	   	     	       	   (mkPart (varA,varB,varC) (mkTyArrow [mkRec varC] (mkTyProdApp [mkRec varA, mkRec varB]))))
-			where
-			varA = mkTyVar a
-			varB = mkTyVar b
-			varC = mkTyVar c
-
-splitGamVal _ =  error "splitGamVal"
-}
+  | AGItf       expr        .  valGam               =  @initialValGam
 %%]
 
 %%[1.patValGam
@@ -256,6 +211,7 @@ ATTR AllDataField [ | tyGam: TyGam | ]
 %%[initTyGam.6.1
                                                           , (hsnRec,    mkTGI (Ty_Con hsnRec) (mkTyArrow [kiRow] kiStar))
                                                           , (hsnEmptyRow, mkTGI tyEmptyRow kiRow)
+							  , (hsnAspect, mkTGI (Ty_Con hsnAspect) (mkTyArrow [kiRow,kiRow] kiStar))
 %%]
 %%[initTyGam.7
                                                           , (hsnRow,    mkTGI (Ty_Con hsnUnknown) kiRow)
@@ -280,14 +236,12 @@ SEM AGItf
 
 %%[6_1.initTyGam
 SEM AGItf
-  | AGItf       loc         .  tyGam                :=  assocLToGam (
+  | AGItf       loc         .  tyGam                :=  (assocLToGam 
 %%@initTyGam.6
 %%@initTyGam.6.1
-                                                          ] ++ @recExts)
-                            .  recExts              =   [ (hsnRowExt l, mkTGI (Ty_Con $ hsnRowExt l) (mkTyArrow [kiStar,kiRow] kiRow)) 
-                                                              | l <- @labels]
-                            .  kiCnstr              :=   emptyCnstr
-                            .  labels               = ["l1","l2","l3"]
+                                                          ])
+                                                         `gamAddGam` @rowExtGam
+                            .  kiCnstr              :=   emptyCnstr                            
 %%]
 
 

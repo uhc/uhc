@@ -47,6 +47,12 @@ WRAPPER AGItf
 %%[6_1 import(EHPredicates)
 %%]
 
+%%[6_1 import(EHAspects)
+%%]
+
+%%[6_1 import(EHInitGam)
+%%]
+
 %%[8 import(EHGenCode)
 %%]
 

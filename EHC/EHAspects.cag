@@ -1,0 +1,38 @@
+% $Id: EHC.lag 199 2004-05-12 19:11:13Z andres $
+
+%%[0
+%include lhs2TeX.fmt
+%include afp.fmt
+%%]
+
+%%[6_1
+ATTR AllDecl AllExpr AllCase [prodGam : {[(DataConstr,HsName,Int)]} | | grammar  USE {++} {[]} : {Grammar}]
+ATTR TyVars DataConstrs DataConstr TyVar TyExprs TyExpr PredExpr [ | | self : SELF]
+
+SEM Decls
+  | Nil       lhs.grammar = []
+  | Cons      lhs.grammar = @hd.grammar ++ @tl.grammar
+
+SEM Decl
+  | Data      lhs.grammar = genGrammar @tyNm @tyVars.self @constrs.self
+  | KiSig     lhs.grammar = []
+  | TySig     lhs.grammar = []
+  
+SEM AGItf
+  | AGItf     loc.prodGam = genProdGam @expr.grammar
+    	      
+%%]
+
+
+
+%%[6_1.Grammars hs
+type Grammar = [(HsName,[DataConstr])]
+genGrammar nt [] constrs = [(nt,constrs)]
+genGrammar _ (x:xs) _    = []
+
+genProdGam [] = []
+genProdGam ((nt,constrs):grammar) = [(p,nt,nrChildren p) | p <- constrs] ++ genProdGam grammar
+  where
+  nrChildren (DataConstr_Constr prod cs) = (length cs - 1)
+
+%%] 

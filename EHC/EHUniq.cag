@@ -31,12 +31,6 @@ SEM AGItf
   | AGItf           expr        .   gUniq                           =   startUID
 %%]
 
-%%[6_1.labels - 2.AGItf.gUniq
-SEM AGItf
-  | AGItf       loc         .  (newUnq,labUnqs)     =   mkNewUIDL ((length @labels) * 4 + 6) startUID
-                expr        . gUniq                 =   @newUnq
-%%]
-
 %%[2.Wild
 SEM TyExpr
   | Wild            (lhs.gUniq,loc.lUniq)                           =   mkNewLevUID     @lhs.gUniq

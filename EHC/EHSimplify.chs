@@ -17,7 +17,7 @@
 
 %%[6_1
 --Row representation and to/from functions
-data Row = Empty | Cons String Ty Row | RowVar TyVarId TyVarCateg deriving Show
+data Row = Empty | Cons Label Ty Row | RowVar TyVarId TyVarCateg deriving Show
 
 toRow :: Ty -> Row
 toRow r
@@ -35,7 +35,7 @@ fromRow (RowVar id c) = Ty_Var id c
 
 predPart r1 r2 r = Pred_Part (fromRow r1) (fromRow r2) (fromRow r)
 predLacks l r    = Pred_Lacks l (fromRow r)
-
+predKnit ag nt inh syn = Pred_Knit (fromRow ag) nt (fromRow inh) (fromRow syn)
 
 -- Useful functions on rows
 equivRow (Empty) (Empty) = True
@@ -51,7 +51,7 @@ remLab l r = error ("EHSimplify.remLab.hs")
 elemRow l ty (Empty) = False
 elemRow l ty (Cons l' ty' r') 
   | l==l' && ty == ty' = True
-  | l==l' && ty /= ty' = error $ "ElemRow: element type error:\n" ++ l ++ "\n" ++ show (ty,ty')
+  | l==l' && ty /= ty' = error $ "ElemRow: element type error:\n" ++ show l ++ "\n" ++ show (ty,ty')
   | otherwise = elemRow l ty r'
 elemRow l ty _ = False
 
@@ -65,6 +65,11 @@ inRow l (Cons l' ty' r')
 inRow l (Empty)        = False
 inRow l (RowVar _ _)   = False
 
+isEmpty (Empty) = True
+isEmpty _	= False
+
+isVar (RowVar _ _) = True
+isVar _ = False
 --Predicate simplification for lacks and partition
 simplify :: [Pred] -> [Pred]
 simplify = concatMap simplifyPred
@@ -73,6 +78,7 @@ simplifyPred :: Pred -> [Pred]
 simplifyPred p = case p of
 	       (Pred_Lacks l r)    -> simplifyLacks l (toRow r)
 	       (Pred_Part r1 r2 r) -> simplifyPart (toRow r1) (toRow r2) (toRow r)
+	       (Pred_Knit ag nt inh syn) -> simplifyKnit (toRow ag) nt (toRow inh) (toRow syn)
 	       
 simplifyLacks l (Empty)        = []
 simplifyLacks l (Cons l' ty r) = if l /= l' then simplifyLacks l r
@@ -87,6 +93,12 @@ simplifyPart (Cons l ty r1) r2 r
   | otherwise      = error "EHSimplify.simplifyPart"
 simplifyPart r1@(RowVar v c) r2 r = [predPart r1 r2 r]
 
+simplifyKnit ag nt inh syn = case ag of
+  (Empty) -> if isEmpty inh && isEmpty syn
+	     then []
+	     else error "Cannot resolve knitting constraint!"
+  (RowVar v c) ->  [predKnit ag nt inh syn]
+  (Cons l ty r) -> error "Not implemented yet"
 
 --Predicate improvement
 improve :: UID -> [Pred] -> Cnstr
@@ -97,7 +109,8 @@ improve u (p:ps)  =  let (cnstr,unq) = improvePred u p
 improvePred :: UID -> Pred -> (Cnstr,UID)
 improvePred u p = case p of
                   (Pred_Lacks _ _)     -> (emptyCnstr,u)
-		  (Pred_Part r1 r2 r)  -> improvePart u (toRow r1) (toRow r2) (toRow r)
+	          (Pred_Part r1 r2 r)  -> improvePart u (toRow r1) (toRow r2) (toRow r)
+	          (Pred_Knit ag nt inh syn) -> (emptyCnstr,u)
 
 improvePart u r1 r2 r 
   | disjoint r1 r2 = let (uid,nextUid) = mkNewUID u

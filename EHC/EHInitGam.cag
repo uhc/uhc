@@ -1,0 +1,116 @@
+% $Id: EHC.lag 199 2004-05-12 19:11:13Z andres $
+
+%%[0
+%include lhs2TeX.fmt
+%include afp.fmt
+%%]
+
+%%[6_1.uniqUIDs
+SEM AGItf
+  | AGItf       loc         . (initUnq,exprUniq)      =   mkNewLevUID startUID
+                expr        . gUniq                   :=  @exprUniq
+%%]
+
+%%[6_1.InitTyGam
+SEM AGItf
+  | AGItf  loc . rowExtGam = assocLToGam $
+    	         	       [ (hsnLabRowExt l,  mkTGI (Ty_Con (hsnLabRowExt l)) (mkTyArrow [kiStar,kiRow] kiRow)) 
+                                 | l <- @labels] ++ 
+			       [ (hsnAspRowExt p d a, mkTGI (Ty_Con (hsnAspRowExt p d a)) 
+			       	 	       	      	    (mkTyArrow [kiStar,kiRow] kiRow))
+                                 | (p,i,d,a) <- @aspExtHNs] 
+%%]
+
+%%[6_1.LabelCollection
+
+ATTR AllDecl Expr [ | | labels USE {`union`} {[]} : {[String]}]
+SEM Expr
+  | Var	      lhs.labels = getLabel @nm 
+
+ATTR AllDecl Expr [ | | attrs USE {`union`} {[]} : {[String]}]
+SEM Expr
+  | Var       lhs.attrs =  getAttr @nm 
+%%]
+
+%%[6_1.initValGam
+SEM AGItf
+  | AGItf loc.initialValGam = assocLToGam @initVals
+    	  loc.initVals = @knit : @emptyRec : @emptyAsp ++ @recExts ++ @recOps ++ @aspExts
+          loc.labels = @expr.labels `union` @expr.attrs
+	  loc.emptyRec = (hsnEmptyRec, ValGamInfo tyEmptyRec)
+	  loc.(recExts,unq1) = mkRecExts @labels @initUnq
+	  loc.(recOps,unq2) = mkRecOps @unq1
+	  loc.(emptyAsp,unq3) = mkEmptyAspect @unq2
+	  loc.(aspExts,unq4) = mkAspExts @aspExtHNs @unq3
+	  loc.(knit,unq5) = mkKnitGam @unq4
+	  loc.aspExtHNs = [ ((getProdNm p),i, dir, attr) 
+	      		    	| (p,nt,i) <- @prodGam, dir <- Syn:[Inh j | j <- [0..i]], attr <- @expr.attrs]
+
+ 
+{
+mkRecExts [] unq      = ([],unq)
+mkRecExts (l:ls) unq  = 
+  let (nextUnq,[t,r]) = mkNewUIDL 2 unq
+      (rs,finalUnq)   = mkRecExts ls nextUnq
+  in ((hsnRecExt l, mkRecExt l (t,r)) : rs, finalUnq)
+
+mkRecExt l (t,r) = ValGamInfo $ mkTyQu TyQu_Forall [t,r] 
+                     (mkLacks (Label l,varR) (mkTyArrow [varT, mkRec varR] (mkRec (mkLabRowExt l varT varR ))))
+                      where
+                      varT = mkTyVar t
+                      varR = mkTyVar r
+
+mkRecOps unq = 
+  let (nextUnq,[a,b,c,ag])     = mkNewUIDL 4 unq
+      (finalUnq,[a',b',c']) = mkNewUIDL 3 nextUnq
+      varA		    = mkTyVar a
+      varB		    = mkTyVar b
+      varC		    = mkTyVar c
+      varAG		    = mkTyVar ag
+      varA'		    = mkTyVar a'
+      varB'		    = mkTyVar b'
+      varC'		    = mkTyVar c'
+      join		    = (hsnJoin,ValGamInfo $ mkTyQu TyQu_Forall [a,b,c,ag]
+	   	     	       	 (mkPart (varA,varB,varC) (mkTyArrow [mkAspect varAG varA, mkAspect varAG varB] (mkAspect varAG varC))))
+      remove	            = (hsnRemove, ValGamInfo $ mkTyQu TyQu_Forall [a',b',c']
+	   	     	       	 (mkPart (varA',varB',varC') (mkTyArrow [mkRec varC', mkRec varA'] (mkRec varB'))))
+  in ([join,remove] ,finalUnq)
+
+mkEmptyAspect unq = 
+  let (nextUnq,ag) = mkNewUID unq
+  in ([(hsnEmptyAspect, ValGamInfo $ mkTyQu TyQu_Forall [ag] (mkAspect (mkTyVar ag) tyEmptyRow))],nextUnq)
+
+getProdNm (DataConstr_Constr (HNm prod) _) = prod
+
+genAspGam nms = map (\n -> (n,ValGamInfo (tyInt))) (hsnEmptyAspect:nms)
+
+
+mkAspExts [] unq      = ([],unq)
+mkAspExts ((prod,i,dir,attr):aspNms) unq  = 
+  let (nextUnq,[ag,asp,t]) = mkNewUIDL 3 unq
+      (rs,finalUnq)   = mkAspExts aspNms nextUnq
+  in ((hsnExtAspect prod i dir attr, mkAspExtTy (prod,dir,attr) (ag,asp,t)) : rs, finalUnq)
+
+mkAspExtTy (prod,dir,attr) (ag,asp,t) = ValGamInfo $ mkTyQu TyQu_Forall [ag,asp,t] 
+                     (mkLacks (Aspect prod dir attr,varAsp) (mkTyArrow [mkTyArrow [varAG] varT, mkAspect varAG varAsp] (mkAspect varAG (mkAspRowExt prod dir attr varT varAsp ))))
+                      where
+                      varT    = mkTyVar t
+                      varAG   = mkTyVar ag
+                      varAsp  = mkTyVar asp
+
+mkKnitGam unq = 
+   let (nextUnq,[ag,asp,nt,inh,syn,rest]) = mkNewUIDL 6 unq
+       varAG = mkTyVar ag
+       varAsp  = mkTyVar asp
+       varNT  = mkTyVar nt
+       varInh  = mkTyVar inh
+       varSyn  = mkTyVar syn
+       knitPred ty = mkKnit (varAsp,varNT,varInh,varSyn) ty
+       partPred ty = mkPart (varAsp,(mkTyVar rest),varAG) ty
+       knitTy = knitPred (partPred (mkTyArrow [mkAspect varAG varAsp,varNT, mkRec varInh] (mkRec varSyn))) 
+       quantKnitTy = mkTyQu TyQu_Forall [ag,asp,nt,inh,syn,rest] knitTy
+   in ((hsnKnit, ValGamInfo quantKnitTy),nextUnq)
+}
+
+
+%%]

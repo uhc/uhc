@@ -121,7 +121,7 @@ SEM TyQu
 
 %%[6_1.PPPreds
 SEM Pred
-  | Lacks       loc.pp    = @ty.pp >|< text"\\" >|< text @label
+  | Lacks       loc.pp    = @ty.pp >|< text"\\" >|< text (show @label)
                 ty.parNeed = ParNotNeeded
 		ty.parNeedL = []
   | Part        loc.pp    = pp_parens @r1.pp  >#< text "+" >#< pp_parens @r2.pp
@@ -143,7 +143,22 @@ SEM Pred
 		syn.parNeedL = []
 %%]
 
-%%[6_1.PPQualTy
+%%[6_1.PrettyPrintRowsHack
+SEM Ty
+  | App		loc .   pp      :=   if @func.isRowWrapper then @func.pp >#< @ppRow
+    		         	     else if @isSpineRoot
+                                       then  ppParNeed  @parNeed @lhs.parNeed
+                                             (ppAppTop (@appFunNm,@appFunPP) @appArgPPL @ppDflt)
+                                       else  @ppDflt
+                loc.ppRow = "{|" >#< ppListAltSep False "," (@arg.gatherPPL) >#< "|}"
+  | Con         loc .   pp       :=  if isEmptyCon @nm then text "\b"  else ppCon @nm
+
+ATTR AllTy [ | |gatherPPL USE {++} {[@pp]} : PP_DocL isRowWrapper USE { `const` } {False} : Bool isRowExt USE { `const`} {False} : Bool]
+SEM Ty
+  | Con lhs.isRowWrapper = isRowWrapper @nm
+    	lhs.isRowExt = isExtRow @nm
+  | App lhs.gatherPPL = if @func.isRowExt then @func.gatherPPL ++ @arg.gatherPPL else [@pp]
+
 SEM Ty
   | QualTy      loc.pp    =  text "(" >|< @pred.pp >|< text ")" >#< text "=>" >#< @ty.pp 
 %%]

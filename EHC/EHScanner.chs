@@ -14,3 +14,13 @@
 
 %%[7 import(EHScannerMachine, UU.Scanner.Token,UU.Scanner.TokenParser,UU.Scanner.Position,UU.Scanner.TokenShow(),UU.Scanner.GenTokenOrd(),UU.Scanner.GenTokenSymbol())
 %%]
+
+%%[6_1 module EHScanner
+
+%%]
+
+%%[6_1 export(module EHScannerMachine, module UU.Scanner.Token, module UU.Scanner.TokenParser, module UU.Scanner.Position)
+%%]
+
+%%[6_1 import(EHScannerMachine, UU.Scanner.Token,UU.Scanner.TokenParser,UU.Scanner.Position,UU.Scanner.TokenShow(),UU.Scanner.GenTokenOrd(),UU.Scanner.GenTokenSymbol())
+%%]

@@ -27,7 +27,7 @@
 %%[6 hs export(kiStar) 
 %%]
 
-%%[6_1 hs export(mkRowExt,kiRow,tyEmptyRow,tyEmptyRec,tyRowExt,Pred(..),isEmptyRow,matchRowExt,mkRec,mkLacks, isTyVar,isRowExt,mkPart,mkKnit)
+%%[6_1 hs export(mkRowExt,kiRow,tyEmptyRow,tyEmptyRec,tyRowExt,Pred(..),isEmptyRow,matchRowExt,mkRec,mkLacks, isTyVar,isRowExt,mkPart,mkKnit,mkAspect,mkLabRowExt,mkAspRowExt)
 %%]
 
 %%[6_1 hs import(Maybe)
@@ -200,6 +200,9 @@ mkTyFreshProd = mkTyFreshProdFrom startUID
 %%[6_1.mkRowExt hs
 mkRowExt l ty r = mkTyConApp (hsnRowExt l) [ty,r]
 mkRec r = Ty_App tyRec r
+mkAspect ag asp = mkTyConApp hsnAspect [ag,asp]
+mkLabRowExt l ty r = mkTyConApp (hsnLabRowExt l) [ty,r]
+mkAspRowExt p dir attr ty r = mkTyConApp (hsnAspRowExt p dir attr) [ty,r]
 %%]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -223,7 +226,7 @@ tyRec       = Ty_Con hsnRec
 tyEmptyRec  = Ty_App tyRec tyEmptyRow
 
 isEmptyRow  = (==) tyEmptyRow
-matchRowExt (Ty_App (Ty_App (Ty_Con (HNm ('E':'x':'t':'R':'o':'w':'_':l))) ty) r) 
+matchRowExt (Ty_App (Ty_App (Ty_Con (ExtRow l)) ty) r) 
   = Just (l,ty,r)
 matchRowExt _ = Nothing
 
