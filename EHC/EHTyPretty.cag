@@ -126,21 +126,19 @@ SEM Pred
 		ty.parNeedL = []
   | Part        loc.pp    = pp_parens @r1.pp  >#< text "+" >#< pp_parens @r2.pp
     			      >#< text "~" >#< pp_parens @r.pp
-    		r1.parNeed = ParNotNeeded
-		r2.parNeed = ParNotNeeded
-		r.parNeed = ParNotNeeded
-		r1.parNeedL = []
-		r2.parNeedL = []
-		r.parNeedL = []
+    		loc.parNeed = ParNotNeeded
+		loc.parNeedL = []
   | Knit        loc.pp    = text "knit" >#< @ag.pp >#< text "to" >#< pp_parens @nt.pp >#< pp_parens @inh.pp >#< pp_parens @syn.pp
-    		ag.parNeed = ParNotNeeded
-		nt.parNeed = ParNotNeeded
-		inh.parNeed = ParNotNeeded
-		syn.parNeed = ParNotNeeded
-		ag.parNeedL = []
-		nt.parNeedL = []
-		inh.parNeedL = []
-		syn.parNeedL = []
+    		loc.parNeed = ParNotNeeded 
+    		loc.parNeedL = []
+  | Syns        loc.parNeedL = []
+    	 	loc.parNeed = ParNotNeeded
+		loc.pp	    = text "syns" >#< @d.pp >#< text @attr >#< text "::" >#< @ty.pp >#< text "on" >#< @nt.pp
+  | Inhs	loc.parNeedL = []
+    	 	loc.parNeed = ParNotNeeded
+		loc.pp = text "inhs" >#< @d.pp >#< text @attr >#< text "::" >#< @ty.pp >#< text "on" >#< @nt.pp
+
+		
 %%]
 
 %%[6_1.PrettyPrintRowsHack

@@ -78,8 +78,8 @@ simplifyImprove synPred uq preds cnstr =
       subPreds = impCnstrs |=> preds
       (simpPreds,uq'') = simplify synPred uq' subPreds
   in if simpPreds == preds 
-     then (simpPreds,impCnstrs |=> cnstr) 
-     else trace ("simplify and improve") simplifyImprove synPred uq'' simpPreds (impCnstrs |=> cnstr)
+     then (simpPreds, cnstr |=> impCnstrs) 
+     else trace ("simplify and improve") simplifyImprove synPred uq'' simpPreds (cnstr |=> impCnstrs)
 
 
 --Predicate simplification for lacks and partition
@@ -94,6 +94,8 @@ simplifyPred synPred uq p =
     (Pred_Lacks l r)    -> (simplifyLacks l (toRow r),uq)
     (Pred_Part r1 r2 r) -> (simplifyPart (toRow r1) (toRow r2) (toRow r),uq)
     (Pred_Knit ag nt inh syn) -> simplifyKnit synPred uq (toRow ag) nt (toRow inh) (toRow syn)
+    (Pred_Syns d attr ty nt ) -> ([p],uq)
+    (Pred_Inhs d attr ty nt) -> ([p],uq)
 	       
 simplifyLacks l (Empty)        = []
 simplifyLacks l (Cons l' ty r) = if l /= l' then simplifyLacks l r
@@ -135,7 +137,7 @@ mkDefRow _ _ _= error "not finished yet"
 improve :: UID -> [Pred] -> (Cnstr,UID)
 improve unq []      =  (emptyCnstr,unq)
 improve u (p:ps)    =  let (cnstr,unq) = improvePred u p
-			   (subst,unq') = improve unq ps
+			   (subst,unq') = improve unq (cnstr |=> ps)
 		       in (subst |=> cnstr,unq')
 
 improvePred :: UID -> Pred -> (Cnstr,UID)
@@ -143,6 +145,7 @@ improvePred u p = case p of
                   (Pred_Lacks _ _)     -> (emptyCnstr,u)
 	          (Pred_Part r1 r2 r)  -> improvePart u (toRow r1) (toRow r2) (toRow r)
 	          (Pred_Knit ag nt inh syn) -> improveKnit u (toRow ag) nt (toRow inh) (toRow syn)
+		  t			    -> (emptyCnstr,u)
 
 improvePart u r1 r2 r 
   | disjoint r1 r2 = let (uid,nextUid) = mkNewUID u
@@ -152,10 +155,12 @@ improvePart u r1 r2 r
   | otherwise = error $ "Unresolvable constraint: " ++ show (r1,r2,r) --(emptyCnstr,u)
 
 improveKnit u Empty nt inh syn  =
-  let fo = unify u (fromRow Empty) (fromRow (rowVar inh))
-      fo' = unify (foUniq fo) (foCnstr fo |=> (fromRow (rowVar syn))) (fromRow Empty)
+  let fo = unify u (fromRow Empty) (fromRow (inh))
+      fo' = unify (foUniq fo) (foCnstr fo |=> (fromRow (syn))) (fromRow Empty)
   in (foCnstr fo' |=> foCnstr fo,foUniq fo')
-improveKnit u ag nt inh syn = (emptyCnstr,u)
+improveKnit u ag nt inh syn = let attrDefs = groupAttrs [] ag 
+				  (cnstrs,unq) = unifyAttrTys u (map snd attrDefs)
+                              in  (cnstrs,unq)
 
 rowVar (Cons _ _ r)    = rowVar r
 rowVar r@(RowVar _ _)  = r
@@ -167,7 +172,30 @@ join r (Empty) rv		  = r
 join r (Cons l ty r') rv	  = Cons l ty (join r r' rv)
 join (RowVar _ _) (RowVar _ _) rv = trace "used fresh row variable\n" rv
 
+groupAttrs g Empty = g
+groupAttrs g (RowVar _ _) = g
+groupAttrs g (Cons l ty r) = groupAttrs (add l ty g) r
+
+add l ty [] = [(l,[ty])]
+add l ty ((l',tys) : rest) = if sameAttr l l' then (l',ty:tys) : rest
+					      else (l',tys) : add l ty rest
+
+unifyAttrTys u [] = (emptyCnstr,u)
+unifyAttrTys u (tys:tyss) = let (cnstr,unq) = unifyL u tys 
+				(cnstrs,unq') = unifyAttrTys unq tyss 
+			    in (cnstrs |=> cnstr,unq')
+
+sameAttr a1 a2 = getAttrName a1 == getAttrName a2
+sameNT = undefined --fix this
+
 unify u t t' =  fitsIn strongFIOpts u t t'
+unifyL u [] = (emptyCnstr,u)
+unifyL u [x] = (emptyCnstr,u)
+unifyL u (t1:t2:ts) = let fo = unify u t1 t2
+			  resTy = foTy fo
+			  (cnstrs,unq) = unifyL (foUniq fo) (resTy:ts)
+		      in (cnstrs |=> foCnstr fo, unq) 
+		      
 uidError = error "EHSimplify:no uid"
 
 %%]

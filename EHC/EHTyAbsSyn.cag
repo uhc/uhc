@@ -73,9 +73,11 @@ DATA Ty
   | QualTy pred : Pred ty : Ty
 
 DATA Pred
-  | Lacks label : {Label} ty : Ty
-  | Part  r1,r2,r : Ty
-  | Knit  ag,nt,inh,syn : Ty
+  | Lacks  label : {Label} ty : Ty
+  | Part   r1,r2,r : Ty
+  | Knit   ag,nt,inh,syn : Ty
+  | Syns   d : Ty attr : {String} ty : Ty nt : Ty
+  | Inhs   d : Ty attr : {String} ty : Ty nt : Ty
 %%]
 
 %%[7

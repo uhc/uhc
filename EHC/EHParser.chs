@@ -612,6 +612,8 @@ pExpr           =    pExprPrefix <*> pExpr
 %%@pExprBaseCommon.5
                <|> sem_Expr_AspectRoot <$ pKey "aspect" <*> pAspect
 	       <|> pRec
+	       <|> (\(f,t) attr -> sem_Expr_App (sem_Expr_App (sem_Expr_Var (f attr)) (sem_Expr_Var hsnApenstaart)) (sem_Expr_Var (HNm t)) ) <$ pKey "@" <*> ((\x -> (SelectSynAttr,x)) <$> pVarid <|> (\x -> (SelectInhAttr,x)) <$> pKey "lhs") <* pKey "." <*> pVarid
+              
 %%]
 
 %%[7.pExprBase -5.pExprBase
@@ -687,7 +689,8 @@ pAspect = foldr sem_Expr_App emptyAspect <$> pList_ng pSemRule
   emptyAspect = sem_Expr_Var hsnEmptyAspect
 
 pSemRule :: EHParser T_Expr 
-pSemRule =  (\p t e -> sem_Expr_App (mkAspectExt p t) (semRuleBody p e))  <$ pKey "|" <*> pRulePattern <*> pTarget <* pKey "=" <*> pExpr
+pSemRule =  ( \ p t e -> sem_Expr_App (mkAspectExt p t) (semRuleBody p e))  <$ 
+  pKey "|" <*> pRulePattern <*> pTarget <* pKey "=" <*> pExpr
   where
   pRulePattern = pParens (Prod <$> pConid <*> pList pVarid)
   pTarget = (,) <$> pKey "lhs" <* pKey "." <*> pVarid
@@ -698,6 +701,7 @@ pSemRule =  (\p t e -> sem_Expr_App (mkAspectExt p t) (semRuleBody p e))  <$ pKe
   pat cs = sem_PatExpr_AppTop (foldl1 sem_PatExpr_App ((sem_PatExpr_Con (hsnProd (length cs))) : map (sem_PatExpr_Var . HNm) cs))
   lambdas e = sem_Expr_Lam (sem_PatExpr_Var hsnApenstaart) (sem_Expr_Lam (sem_PatExpr_Var hsnLhs) e)
   deconstr p = hsnUn (HNm p) 
+
 
 mkAspectExt :: Prod -> (String,String) -> T_Expr
 mkAspectExt prod@(Prod con vars) (target,attr)  
@@ -718,7 +722,9 @@ pRecEnding = pKey "|" *> pExpr
 
 pRecExt :: EHParser T_Expr
 pRecExt = (\l e -> sem_Expr_App (sem_Expr_Var (ExtRec l)) e)  <$> pVarid <* pKey "=" <*> pExpr
+
 %%]
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Parser for Records

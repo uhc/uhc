@@ -211,6 +211,7 @@ ATTR AllDataField [ | tyGam: TyGam | ]
                                                           , (hsnRec,    mkTGI (Ty_Con hsnRec) (mkTyArrow [kiRow] kiStar))
                                                           , (hsnEmptyRow, mkTGI tyEmptyRow kiRow)
 							  , (hsnAspect, mkTGI (Ty_Con hsnAspect) (mkTyArrow [kiRow,kiRow] kiStar))
+							  , (hsnAG,mkTGI (Ty_Con hsnAG) (mkTyArrow [kiRow] kiStar))
 %%]
 %%[initTyGam.7
                                                           , (hsnRow,    mkTGI (Ty_Con hsnUnknown) kiRow)

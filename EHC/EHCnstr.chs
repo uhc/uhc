@@ -180,9 +180,13 @@ instance Substitutable Pred where
   sub |=> (Pred_Lacks l r) = Pred_Lacks l (sub |=> r)
   sub |=> (Pred_Part r1 r2 r) = Pred_Part (sub |=> r1)  (sub |=> r2)  (sub |=> r)
   sub |=> (Pred_Knit ag nt i s) = Pred_Knit (sub |=> ag) (sub |=> nt) (sub |=> i) (sub |=> s)
+  sub |=> (Pred_Inhs d attr ty nt) = Pred_Inhs (sub |=> d) attr (sub |=> ty) (sub |=> nt)
+  sub |=> (Pred_Syns d attr ty nt) = Pred_Syns (sub |=> d) attr (sub |=> ty) (sub |=> nt)
   ftv (Pred_Lacks l r) = ftv r
   ftv (Pred_Part r1 r2 r) = ftv r1 `union` ftv r2 `union` ftv r
   ftv (Pred_Knit ag nt i s) = ftv ag `union` ftv nt `union` ftv i `union` ftv s
+  ftv (Pred_Syns d attr ty nt) = ftv d `union` ftv ty `union` ftv nt
+  ftv (Pred_Inhs d attr ty nt) = ftv d `union` ftv ty `union` ftv nt
 %%]
 
 

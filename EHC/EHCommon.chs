@@ -1,3 +1,4 @@
+
 % $Id: EHC.lag 199 2004-05-12 19:11:13Z andres $
 
 %%[0
@@ -51,7 +52,7 @@
 %%[6 export(hsnStar)
 %%]
 
-%%[6_1 export(hsnRow,hsnEmptyRow,hsnEmptyRec,hsnRec,hsnRowExt,hsnRecExt,hsnJoin,hsnRemove,Dir(..),isLhs,hsnEmptyAspect,Prod(..),isAspExt,getAttr,hsnAspect,isRowWrapper,isEmptyCon,isExtRow,isRec,ppListAltSep,isEmptyRec,getLabel,hsnAspRowExt,hsnLabRowExt, Label(..),hsnExtAspect,hsnKnit,getAttrName,hsnApenstaart,hsnLhs)
+%%[6_1 export(hsnRow,hsnEmptyRow,hsnEmptyRec,hsnRec,hsnRowExt,hsnRecExt,hsnJoin,hsnRemove,Dir(..),isLhs,hsnEmptyAspect,Prod(..),isAspExt,getAttr,hsnAspect,isRowWrapper,isEmptyCon,isExtRow,isRec,ppListAltSep,isEmptyRec,getLabel,hsnAspRowExt,hsnLabRowExt, Label(..),hsnExtAspect,hsnKnit,getAttrName,hsnApenstaart,hsnLhs,hsnSelInhAttr,hsnSelSynAttr,hsnAG)
 %%]
 
 
@@ -101,7 +102,8 @@ data HsName                         =   HNm String
                                     |   ExtAspect Prod Dir String 
 				    |   EmptyAspect 
 				    |   ExtRec String
-				    |   SelectAttr String
+				    |   SelectInhAttr String
+				    |	SelectSynAttr String
 				    |	ExtRow Label deriving Ord
 
 data Label = Label String | Aspect String Dir String deriving (Ord,Eq)
@@ -114,7 +116,8 @@ instance Eq HsName where
   EmptyAspect == EmptyAspect = True
   (ExtRow l) == (ExtRow l') = l == l'
   (ExtRec l) == (ExtRec l') = l == l'
-  (SelectAttr l) == (SelectAttr l') = l ==l'
+  (SelectInhAttr l) == (SelectInhAttr l') = l == l'
+  (SelectSynAttr l) == (SelectSynAttr l') = l == l'
   _ == _ = False
 
 instance Eq Prod where
@@ -133,7 +136,8 @@ instance Show HsName where
   show (EmptyAspect) = ""
   show (ExtRec s) =  s ++ " = "
   show (ExtRow l) = show l ++ " :: "
-  show (SelectAttr l) = '.' : l
+  show (SelectSynAttr l) = '.' : l
+  show (SelectInhAttr l) = '.' : l
 
 instance Show Label where
   show (Label l) = l
@@ -220,12 +224,16 @@ isRowWrapper r			    =   r == hsnRec || r == hsnAspect
 hsnJoin	  			    =   HNm "join"
 hsnRemove			    =   HNm "remove"
 hsnAspect			    =   HNm "Aspect"
+hsnAG				    =   HNm "AG"
 hsnEmptyAspect			    =   EmptyAspect
 hsnExtAspect prod i dir attr	    =   ExtAspect (Prod prod (children i)) dir attr
 isLhs				    =   (==) "lhs"
 hsnLhs				    =   HNm "lhs"
 isEmptyCon con			    =   con == hsnEmptyRow 
 hsnKnit				    =	HNm "knit"
+hsnSelInhAttr l			    =   SelectInhAttr l
+hsnSelSynAttr l			    =   SelectSynAttr l
+
 ppListAltSep b sep [] = empty
 ppListAltSep b sep (x:xs) = if (not b)
 		            then x >|< ppListAltSep (not b) sep xs

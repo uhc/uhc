@@ -35,7 +35,7 @@ SEM Expr
 %%[6_1.initValGam
 SEM AGItf
   | AGItf loc.initialValGam = assocLToGam @initVals
-    	  loc.initVals = @knit : @emptyRec : @emptyAsp ++ @recExts ++ @recOps ++ @aspExts
+    	  loc.initVals = @knit : @emptyRec : @emptyAsp ++ @recExts ++ @recOps ++ @aspExts ++ @attrSels
           loc.labels = @expr.labels `union` @expr.attrs
 	  loc.emptyRec = (hsnEmptyRec, ValGamInfo tyEmptyRec)
 	  loc.(recExts,unq1) = mkRecExts @labels @initUnq
@@ -43,6 +43,7 @@ SEM AGItf
 	  loc.(emptyAsp,unq3) = mkEmptyAspect @unq2
 	  loc.(aspExts,unq4) = mkAspExts @aspExtHNs @unq3
 	  loc.(knit,unq5) = mkKnitGam @unq4
+	  loc.(attrSels,unq6) = mkAttrSels @labels @unq5
 	  loc.aspExtHNs = [ (p,length cs - 1,dir,attr) 
 	      		    	| (nt,p,cs) <- @grammar, dir <- Syn:[Inh j | j <- [0..length cs - 1]], attr <- @expr.attrs]
 
@@ -90,7 +91,7 @@ mkAspExts ((prod,i,dir,attr):aspNms) unq  =
   in ((hsnExtAspect prod i dir attr, mkAspExtTy (prod,dir,attr) (ag,nt,asp,t)) : rs, finalUnq)
 
 mkAspExtTy (prod,dir,attr) (ag,nt,asp,t) = ValGamInfo $ mkTyQu TyQu_Forall [ag,nt,asp,t] 
-                     (mkLacks (Aspect prod dir attr,varAsp) (mkTyArrow [mkTyArrow [varAG,varNT] varT, mkAspect varAG varAsp] (mkAspect varAG (mkAspRowExt prod dir attr varT varAsp ))))
+                     (mkLacks (Aspect prod dir attr,varAsp) (mkTyArrow [mkTyArrow [mkAG varAG,varNT] varT, mkAspect varAG varAsp] (mkAspect varAG (mkAspRowExt prod dir attr varT varAsp ))))
                       where
                       varT    = mkTyVar t
                       varAG   = mkTyVar ag
@@ -109,6 +110,38 @@ mkKnitGam unq =
        knitTy = knitPred ((mkTyArrow [mkAspect varAG varAsp,varNT, mkRec varInh] (mkRec varSyn))) 
        quantKnitTy = mkTyQu TyQu_Forall [ag,asp,nt,inh,syn,rest] knitTy
    in ((hsnKnit, ValGamInfo quantKnitTy),nextUnq)
+
+mkAttrSels  [] unq = ([],unq)
+mkAttrSels (l:ls) unq = let (synAttrSel,unq') = mkSynAttrSel l unq
+	   	      	    (inhAttrSel,unq'') = mkInhAttrSel l unq'
+                            (attrSels,unq''') = mkAttrSels ls unq''
+			in (synAttrSel : inhAttrSel : attrSels, unq''')
+
+mkSynAttrSel l unq =
+  let (nextUnq,[d,ty,nt,r,ag]) = mkNewUIDL 5 unq
+      varD = mkTyVar d
+      varTy = mkTyVar ty
+      varNt = mkTyVar nt
+      varR = mkTyVar r
+      varAg = mkTyVar ag
+      synsPred = mkSyns (varD,l,varTy,varNt)
+      partPred = mkPart (varD,varR,varAg)
+      attrSynSelTy = partPred (synsPred (mkTyArrow [mkAG varAg,varNt] varTy))
+      finalTy = mkTyQu TyQu_Forall [d,ty,nt,r,ag] attrSynSelTy
+  in ((hsnSelSynAttr l, ValGamInfo finalTy), nextUnq)
+
+mkInhAttrSel l unq =
+  let (nextUnq,[d,ty,nt,r,ag]) = mkNewUIDL 5 unq
+      varD = mkTyVar d
+      varTy = mkTyVar ty
+      varNt = mkTyVar nt
+      varR = mkTyVar r
+      varAg = mkTyVar ag
+      inhsPred = mkInhs (varD,l,varTy,varNt)
+      partPred = mkPart (varD,varR,varAg)
+      attrInhSelTy = partPred (inhsPred (mkTyArrow [varNt, mkAG varAg] varTy))
+      finalTy = mkTyQu TyQu_Forall [d,ty,nt,r,ag] attrInhSelTy
+  in ((hsnSelInhAttr l, ValGamInfo finalTy), nextUnq)
 
 }
 
