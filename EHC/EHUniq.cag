@@ -33,7 +33,7 @@ SEM AGItf
 
 %%[6_1.labels - 2.AGItf.gUniq
 SEM AGItf
-  | AGItf       loc         .  (newUnq,labUnqs)     =   mkNewUIDL ((length @labels) * 4) startUID
+  | AGItf       loc         .  (newUnq,labUnqs)     =   mkNewUIDL ((length @labels) * 4 + 6) startUID
                 expr        . gUniq                 =   @newUnq
 %%]
 

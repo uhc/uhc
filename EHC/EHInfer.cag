@@ -62,8 +62,10 @@ SEM Expr
 
 %%[6_1.Let
 SEM Expr
-  | Let        loc          .  lQuValGam            :=  valGamInst1Exists @lUniq2 (valGamQuantify @gTyTvL (addPredGam @finalPreds @lSubsValGam))
-    	       loc	    .  finalPreds	    =   simplifyPreds (@decls.tyCnstr |=> @decls.preds)
+  | Let        loc          .  lQuValGam            :=  valGamInst1Exists @lUniq2 (valGamQuantify @gTyTvL (addPredGam @finalPreds (@impCnstrs |=> @lSubsValGam)))
+    	       loc	    .  substPreds	    =   @decls.tyCnstr |=> @decls.preds
+    	       loc          .  impCnstrs	    =   improve @substPreds
+    	       loc	    .  finalPreds	    =   simplify (@impCnstrs |=> @substPreds) 
 %%]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -115,9 +117,10 @@ ATTR AllDecl AllExpr [ valGam: ValGam | | ]
 
 SEM AGItf
   | AGItf       expr        .  valGam               =  assocLToGam ((hsnEmptyRec, ValGamInfo tyEmptyRec) :
-    			       			    	  @recExtTys ++ @recSelTys)
+    			       			    	  @recExtTys ++ @recSelTys ++ @recOps)
                 loc         .  (recExtTys,labUnqs') =  mkRecExts @labels @labUnqs
-		loc	    .  recSelTys            =  mkRecSels @labels @labUnqs'
+		loc	    .  (recSelTys,jUnqs)       =  mkRecSels @labels @labUnqs'
+		loc	    .  recOps		    =  [joinGamVal (take 3 @jUnqs), splitGamVal (drop 3 @jUnqs)]
 
 
 {
@@ -131,13 +134,33 @@ mkRecExt l (t,r) = ValGamInfo $ mkTyQu TyQu_Forall [t,r]
                       varT = mkTyVar t
                       varR = mkTyVar r
 
-mkRecSels [] _ = []
-mkRecSels (l:ls) (t:r:vs) = (hsnRecSel l, mkRecSel l (t,r)) : mkRecSels ls vs
+mkRecSels [] x = ([],x)
+mkRecSels (l:ls) (t:r:vs) = 
+  let (rs,us) =  mkRecSels ls vs
+  in ((hsnRecSel l, mkRecSel l (t,r)) : rs, us)
 mkRecSel l (t,r) = ValGamInfo $ mkTyQu TyQu_Forall [t,r]
 	 		       (mkTyArrow [mkRec (mkRowExt l varT varR)] varT)
                       where
 		      varT = mkTyVar t
 		      varR = mkTyVar r
+
+joinGamVal [a,b,c] = (hsnJoin, ValGamInfo $ mkTyQu TyQu_Forall [a,b,c]
+	   	     	       		   (mkPart (varA,varB,varC) (mkTyArrow [mkRec varA, mkRec varB] (mkRec varC))))
+			where
+			varA = mkTyVar a
+			varB = mkTyVar b
+			varC = mkTyVar c
+
+joinGamVal _ = error "joinGamVal"
+
+splitGamVal [a,b,c] = (hsnSplit, ValGamInfo $ mkTyQu TyQu_Forall [a,b,c]
+	   	     	       	   (mkPart (varA,varB,varC) (mkTyArrow [mkRec varC] (mkTyProdApp [mkRec varA, mkRec varB]))))
+			where
+			varA = mkTyVar a
+			varB = mkTyVar b
+			varC = mkTyVar c
+
+splitGamVal _ =  error "splitGamVal"
 }
 %%]
 

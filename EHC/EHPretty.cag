@@ -150,6 +150,7 @@ SEM TyExpr
   | QualTyExpr  loc . pp = text "(" >|< @predExpr.pp >|< text ")" >#< text "=>" >#< @tyExpr.pp
 SEM PredExpr
   | LacksExpr   loc . pp = @tyExpr.pp >|< text "\\" >|< text @label
+  | PartExpr    loc . pp = @r1.pp >#< @r2.pp >#< text "partition" >#< @r.pp
 %%]
 
 %%[7

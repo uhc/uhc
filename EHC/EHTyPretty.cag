@@ -124,6 +124,13 @@ SEM Pred
   | Lacks       loc.pp    = @ty.pp >|< text"\\" >|< text @label
                 ty.parNeed = ParNotNeeded
 		ty.parNeedL = []
+  | Part        loc.pp    = @r1.pp >#< @r2.pp >#< text "partition" >#< @r.pp
+    		r1.parNeed = ParNotNeeded
+		r2.parNeed = ParNotNeeded
+		r.parNeed = ParNotNeeded
+		r1.parNeedL = []
+		r2.parNeedL = []
+		r.parNeedL = []
 %%]
 
 %%[6_1.PPQualTy

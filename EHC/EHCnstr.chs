@@ -178,7 +178,9 @@ instance Substitutable Cnstr where
 %%[6_1.SubstitutablePred
 instance Substitutable Pred where
   sub |=> (Pred_Lacks l r) = Pred_Lacks l (sub |=> r)
+  sub |=> (Pred_Part r1 r2 r) = Pred_Part (sub |=> r1)  (sub |=> r2)  (sub |=> r)
   ftv (Pred_Lacks l r) = ftv r
+  ftv (Pred_Part r1 r2 r) = ftv r1 `union` ftv r2 `union` ftv r
 %%]
 
 

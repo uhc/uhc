@@ -169,6 +169,7 @@ SEM TyExpr
 ATTR PredExpr [ | | pred : Pred]
 SEM PredExpr
   | LacksExpr  lhs          .  pred                 = Pred_Lacks @label @tyExpr.ty
+  | PartExpr   lhs          .  pred		    = Pred_Part @r1.ty @r2.ty @r.ty
 %%]
 
 %%[5
