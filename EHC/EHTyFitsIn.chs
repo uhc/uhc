@@ -49,6 +49,9 @@
 %%[6_1 import Maybe(isJust)
 %%]
 
+%%[6_1 import Debug.Trace
+%%]
+
 %%[9 import(EHPred)
 %%]
 
@@ -453,7 +456,14 @@ fitsIn opts uniq ty1 ty2
                        else calcInserter fi (l,ty) r --inTail
               | isEmptyRow t = err fi [Err_UnifyClash ty1 ty2 t  ty ]
               | otherwise = error "calcInserter.EHTyFitsIn.chs"   
-            fo  = u (emptyFI {fiUniq = uniq, fiFIOpts = opts, fiCoContra = fioCoContra opts}) ty1 ty2     
+            fo  = 
+              let (preds1,t1) = removePreds ty1
+		  (preds2,t2) = removePreds ty2
+		  fo'	      = u (emptyFI {fiUniq = uniq, fiFIOpts = opts, fiCoContra = fioCoContra opts}) t1 t2     
+		  preds       = foCnstr fo' |=> (preds1 ++ preds2)
+		  resTy       = addPreds (preds) (foTy fo')
+		  traceTy     = trace ("Result:\n" ++ show resTy ++ "\nPreds:\n" ++ show (preds1 ++ preds2)) resTy
+	      in fo' {foTy = traceTy}
 %%]
 
 %%[6_1.removeLabel
@@ -462,7 +472,19 @@ removeLabel l t = if isEmptyRow t
                   else let (l', ty, r) = maybe (error "removeLabel.EHTyFitsIn.chs") id (matchRowExt t)
                        in if l' == l then r
                                      else mkRowExt l' ty (removeLabel l r)
-  
+addPreds [] ty = ty
+addPreds (p:ps) t = case t of
+  (Ty_Quant qu tv ty) -> Ty_Quant qu tv (addPreds (p:ps) ty)
+  ty                  -> Ty_QualTy p (addPreds ps ty)
+
+removePreds ty  -- error (show ty)
+  = case ty of
+              (Ty_Quant qu tv ty) -> let (ps,t) = removePreds ty
+	                     	     in (ps,Ty_Quant qu tv t)
+              (Ty_QualTy p ty)    -> let (ps,t) = removePreds ty
+                                     in (p:ps, t)
+              t		      -> ([],t) 
+
 %%]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

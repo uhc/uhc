@@ -81,7 +81,7 @@ doCompile filename opts
 %%@doCompileA.1
 %%@doCompileB.1
 %%@doCompileC.1
-%%@doCompileD.1
+%%@doCompileD.1         
          }
 %%]
 

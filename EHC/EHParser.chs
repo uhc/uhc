@@ -456,7 +456,7 @@ pTyExprPrefix   =    sem_TyExpr_Quant
 
 %%[pTyExprPrefix.6.1
                 <|> sem_TyExpr_QualTyExpr <$> 
-                      (flip sem_PredExpr_LacksExpr <$> pTyExprBase <* pKey "\\" <*> pVarid <* pKey "=>")
+                      (pParens (flip sem_PredExpr_LacksExpr <$> pTyExprBase <* pKey "\\" <*> pVarid) <* pKey "=>")
 %%]
 
 %%[pTyExprPrefix.9

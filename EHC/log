@@ -1,0 +1,36 @@
+-EHAbsSyn 
+  * added QualTyExpr and PredExpr
+-EHTyInfer
+  * added Rec, emptyRow, rowexts to tyGam
+  * added row kind
+-EHPretty
+  * added rules for pretty printing QualTyExprs
+-EHInferExpr
+  * added rules to infer type of QualTyExpr
+-EHTy.cag
+  * added row extension constants
+-EHTyCommonAG.cag
+  * added appSpinePos inh attr to Pred
+-EHTyPretty
+  * added pretty printing Preds and QualTys
+-EHTyQuantify
+  * make sure quantification takes into account type variables in predicates
+-EHCnstr
+  * instances for QualTy and Pred for free type variables and substitution
+-EHCommon
+  * added built in names for record extension, row kind etc.
+-EHParser
+  * added parser for QualTyExprs -- not infallible!
+-EHTyFitsIn
+  * added subsumption for rows
+
+! EHTyFitsIn
+! need to define local attr @labels properly
+! may need to adapt EHTy.cag - i.e. arrow destruction etc.
+! parser for QualTyExpr
+
+points to discuss with Atze:
+  * Missing predicates!
+  * quantification
+  * generation of fresh identifiers for rec ext vals in initial gamma
+  * EHTyFitsIn

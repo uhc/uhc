@@ -265,6 +265,34 @@ tyAppFunArgs
                 _           -> (t,as)
 %%]
 
+%%[6_1.unMkTy.funs -1.unMkTy.funs hs
+tyArrowArgRes t
+  =  case t of
+       (Ty_QualTy pred ty) -> let (a,r) = tyArrowArgRes ty
+                              in (Ty_QualTy pred a, Ty_QualTy pred r)
+       (Ty_App (Ty_App (Ty_Con nm) a) r)
+         | hsnIsArrow nm  -> (a,r)
+       _                  -> (Ty_Any,t)
+
+tyArrowArgsRes t
+  =  case t of
+       (Ty_QualTy pred ty) -> let (as,r) = tyArrowArgsRes ty
+                              in (map (Ty_QualTy pred) as, Ty_QualTy pred r)
+       (Ty_App (Ty_App (Ty_Con nm) a) r)
+         | hsnIsArrow nm  -> let (as,r') = tyArrowArgsRes r in (a:as,r')
+       _                  -> ([],t)
+
+tyAppFunArgs
+  =  extr []
+  where  extr as t
+           =  case t of
+	        Ty_QualTy pred ty -> let (ty',as') =extr as ty
+			       	     in (Ty_QualTy pred ty', map (Ty_QualTy pred) as')
+                Ty_App f a  -> extr (a:as) f
+                _           -> (t,as)
+%%]
+
+
 %%[1.tyProdArgs hs
 tyProdArgs = snd . tyAppFunArgs
 %%]

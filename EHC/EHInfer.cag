@@ -104,6 +104,25 @@ SEM AGItf
   | AGItf       expr        .  valGam               =   emptyGam
 %%]
 
+%%[6_1.valGam - 1.valGam
+ATTR AllDecl AllExpr [ valGam: ValGam | | ]
+
+SEM AGItf
+  | AGItf       expr        .  valGam               =   assocLToGam ((hsnEmptyRec, ValGamInfo tyEmptyRec) :
+    			       			    	  @recExtTys)
+                loc         .  recExtTys            =   mkRecExts @labels 
+                                                                  (snd (mkNewUIDL ((length @labels) * 2) startUID))                          
+{
+mkRecExts [] _ = []
+mkRecExts (l:ls) (t:r:vs) = (hsnRecExt l, mkRecExt l (t,r)) : mkRecExts ls vs
+mkRecExt l (t,r) = ValGamInfo $ mkTyQu TyQu_Forall [t,r] 
+                     (mkLacks (l,varR) (mkTyArrow [varT, mkRec varR] (mkRec (mkRowExt l varT varR ))))
+                      where
+                      varT = mkTyVar t
+                      varR = mkTyVar r
+}
+%%]
+
 %%[1.patValGam
 ATTR AllDecl [ | patValGam: ValGam | ]
 
