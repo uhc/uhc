@@ -29,7 +29,7 @@ DIST_TGZ			:= $(DIST_PREFIX)$(DIST).tgz
 WWW_SRC_ZIP			:= www/current-ehc-src.zip
 WWW_DOC_PDF			:= www/current-ehc-doc.pdf
 
-AGC					:= uuagc --cycle
+AGC					:= uuagc
 #AGC					:= /Volumes/Tmp/Tmp/uuag/a.out
 GHC					:= ghc
 SUBSTEHC			:= bin/substehc.pl

@@ -344,13 +344,13 @@ fitsIn opts uniq ty1 ty2
 %%]
 
 %%[6_1.fitsIn.unquant - 4.fitsIn.unquant
-            unquant fi t@(Ty_Quant _ _ ty) hide howToInst
+            unquant fi t@(Ty_Quant qu tv ty) hide howToInst
                 =   let  (u,uq)         = mkNewLevUID (fiUniq fi)
                          (uqt,rtvs)     = tyInst1Quants uq howToInst t
                          back           = if hide  then  \fo ->  let  s = cnstrFilter (const.not.(`elem` rtvs)) (foCnstr fo)
                                                                  in   fo {foCnstr = s, foTy = s |=> t}
                                                    else  id
-                         preds          = removePreds ty
+                         preds          = (tv `cnstrUnit` (mkTyVar uq)) |=> removePreds ty
                     in   (fi {fiUniq = u},uqt,back,preds)
 %%]
 
@@ -382,9 +382,9 @@ fitsIn opts uniq ty1 ty2
             u fi (Ty_QualTy pred ty) t 
                      = addPreds (u fi ty t) [pred]
             u fi t r2
-                | isJust (matchRowExt t)
+                | isRowExt t
                   = let Just (l,ty,r1) = matchRowExt t
-                        inserter  = calcInserter fi (l,ty) r2
+                        inserter  = (calcInserter fi (l,ty) r2)
                         uq        = foUniq inserter
                         i         = foCnstr inserter
                         ir1       = i |=> r1 
@@ -394,9 +394,7 @@ fitsIn opts uniq ty1 ty2
                         rt        = mkRowExt l (i |=> ty) (foTy res)
                     in if foHasErrs inserter 
                        then inserter
-                       else if foHasErrs res
-                            then res
-                            else emptyFO {foTy = rt, foCnstr = i |=> (foCnstr res)}
+                       else res {foTy = rt, foCnstr = (foCnstr res) |=> i}
 %%]
 
 %%[4.fitsIn.QLR
@@ -493,18 +491,17 @@ fitsIn opts uniq ty1 ty2
             u fi t1                     t2          = err fi [Err_UnifyClash ty1 ty2 t1 t2]
 -- calculating row inserters
               --inVar
-	    calcInserter _ _ _ = undefined
-            calcInserter fi (l,ty) (Ty_Var v f) = 
-              let (u,uq)  = mkNewLevUID (fiUniq fi)
+	    calcInserter fi (l,ty) (Ty_Var v f) = 
+              let (u,uq)  = mkNewUID (fiUniq fi)
                   r       = Ty_Var uq f
-              in bind (fi {fiUniq = u}) v (mkRowExt l ty r)
+              in occurBind (fi {fiUniq = u}) v (mkRowExt l ty r)
             calcInserter fi (l,ty) t
-              | isJust (matchRowExt t)
+              | isRowExt t
                   = let Just (l' ,ty' ,r) = matchRowExt t
                     in if l==l' 
                        then u fi ty ty' --inHead
                        else calcInserter fi (l,ty) r --inTail
-              | isEmptyRow t = err fi [Err_UnifyClash ty1 ty2 t  ty ]
+              | isEmptyRow t = error "Unification rows fails"
               | otherwise = error "calcInserter.EHTyFitsIn.chs"   
             fo  =  
               let fo'	      = u (emptyFI {fiUniq = uniq, fiFIOpts = opts, fiCoContra = fioCoContra opts}) ty1 ty2     

@@ -27,7 +27,7 @@
 %%[6 hs export(kiStar) 
 %%]
 
-%%[6_1 hs export(mkRowExt,kiRow,tyEmptyRow,tyEmptyRec,tyRowExt,Pred(..),isEmptyRow,matchRowExt,mkRec,mkLacks, isTyVar,isRowExt,mkPart)
+%%[6_1 hs export(mkRowExt,kiRow,tyEmptyRow,tyEmptyRec,tyRowExt,Pred(..),isEmptyRow,matchRowExt,mkRec,mkLacks, isTyVar,isRowExt,mkPart,mkKnit)
 %%]
 
 %%[6_1 hs import(Maybe)
@@ -232,6 +232,8 @@ isRowExt = isJust . matchRowExt
 mkLacks (l,r) ty = Ty_QualTy (Pred_Lacks l r) ty
 
 mkPart (r1,r2,r) ty = Ty_QualTy (Pred_Part r1 r2 r) ty
+
+mkKnit (ag,nt,i,s) ty = Ty_QualTy (Pred_Knit ag nt i s) ty
 
 isTyVar t = case t of
   (Ty_Var _ _) -> True

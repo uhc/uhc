@@ -124,13 +124,23 @@ SEM Pred
   | Lacks       loc.pp    = @ty.pp >|< text"\\" >|< text @label
                 ty.parNeed = ParNotNeeded
 		ty.parNeedL = []
-  | Part        loc.pp    = @r1.pp >#< @r2.pp >#< text "partition" >#< @r.pp
+  | Part        loc.pp    = pp_parens @r1.pp  >#< text "+" >#< pp_parens @r2.pp
+    			      >#< text "~" >#< pp_parens @r.pp
     		r1.parNeed = ParNotNeeded
 		r2.parNeed = ParNotNeeded
 		r.parNeed = ParNotNeeded
 		r1.parNeedL = []
 		r2.parNeedL = []
 		r.parNeedL = []
+  | Knit        loc.pp    = text "knit" >#< @ag.pp >#< text "to" >#< pp_parens @nt.pp >#< pp_parens @inh.pp >#< pp_parens @syn.pp
+    		ag.parNeed = ParNotNeeded
+		nt.parNeed = ParNotNeeded
+		inh.parNeed = ParNotNeeded
+		syn.parNeed = ParNotNeeded
+		ag.parNeedL = []
+		nt.parNeedL = []
+		inh.parNeedL = []
+		syn.parNeedL = []
 %%]
 
 %%[6_1.PPQualTy
