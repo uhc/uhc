@@ -687,11 +687,17 @@ pAspect = foldr sem_Expr_App emptyAspect <$> pList_ng pSemRule
   emptyAspect = sem_Expr_Var hsnEmptyAspect
 
 pSemRule :: EHParser T_Expr 
-pSemRule =  (\p t e -> sem_Expr_App (mkAspectExt p t) e)  <$ pKey "|" <*> pRulePattern <*> pTarget <* pKey "=" <*> pExpr
+pSemRule =  (\p t e -> sem_Expr_App (mkAspectExt p t) (semRuleBody p e))  <$ pKey "|" <*> pRulePattern <*> pTarget <* pKey "=" <*> pExpr
   where
   pRulePattern = pParens (Prod <$> pConid <*> pList pVarid)
   pTarget = (,) <$> pKey "lhs" <* pKey "." <*> pVarid
             <|> (,) <$> pVarid  <* pKey "." <*> pVarid
+  semRuleBody p e = lambdas (children p e)
+  children p e = sem_Expr_Let (sem_Decls_Cons (decl p) sem_Decls_Nil) e
+  decl (Prod p cs) = sem_Decl_Val (pat cs) (sem_Expr_App (sem_Expr_Var (deconstr p)) (sem_Expr_Var hsnLhs))
+  pat cs = sem_PatExpr_AppTop (foldl1 sem_PatExpr_App ((sem_PatExpr_Con (hsnProd (length cs))) : map (sem_PatExpr_Var . HNm) cs))
+  lambdas e = sem_Expr_Lam (sem_PatExpr_Var hsnApenstaart) (sem_Expr_Lam (sem_PatExpr_Var hsnLhs) e)
+  deconstr p = hsnUn (HNm p) 
 
 mkAspectExt :: Prod -> (String,String) -> T_Expr
 mkAspectExt prod@(Prod con vars) (target,attr)  

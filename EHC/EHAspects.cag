@@ -6,7 +6,7 @@
 %%]
 
 %%[6_1
-ATTR AllDecl AllExpr AllCase [prodGam : {[(DataConstr,HsName,Int)]} | | grammar  USE {++} {[]} : {Grammar}]
+ATTR AllDecl AllExpr AllCase [ synPred : {[(HsName,[String])]} | | grammar USE {++} {[]} : {Grammar}  ]
 ATTR TyVars DataConstrs DataConstr TyVar TyExprs TyExpr PredExpr [ | | self : SELF]
 
 SEM Decls
@@ -19,20 +19,18 @@ SEM Decl
   | TySig     lhs.grammar = []
   
 SEM AGItf
-  | AGItf     loc.prodGam = genProdGam @expr.grammar
-    	      
+  | AGItf     loc.grammar = @expr.grammar
+    	      expr.synPred = [ (nt, [p' | (nt',p',cs') <- @grammar, nt == nt'] ) | (nt,p,cs) <- @grammar]
 %%]
 
 
 
 %%[6_1.Grammars hs
-type Grammar = [(HsName,[DataConstr])]
-genGrammar nt [] constrs = [(nt,constrs)]
+type Grammar = [(HsName,String,[TyExpr])]
+genGrammar nt [] constrs = [(nt,getProdNm c, getChildren c) | c <- constrs]
 genGrammar _ (x:xs) _    = []
 
-genProdGam [] = []
-genProdGam ((nt,constrs):grammar) = [(p,nt,nrChildren p) | p <- constrs] ++ genProdGam grammar
-  where
-  nrChildren (DataConstr_Constr prod cs) = (length cs - 1)
+getChildren (DataConstr_Constr _ fields) = fields
 
+getProdNm (DataConstr_Constr (HNm prod) _) = prod
 %%] 

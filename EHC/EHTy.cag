@@ -27,7 +27,7 @@
 %%[6 hs export(kiStar) 
 %%]
 
-%%[6_1 hs export(mkRowExt,kiRow,tyEmptyRow,tyEmptyRec,tyRowExt,Pred(..),isEmptyRow,matchRowExt,mkRec,mkLacks, isTyVar,isRowExt,mkPart,mkKnit,mkAspect,mkLabRowExt,mkAspRowExt)
+%%[6_1 hs export(mkRowExt,kiRow,tyEmptyRow,tyEmptyRec,tyRowExt,Pred(..),isEmptyRow,matchRowExt,mkRec,mkLacks, isTyVar,isRowExt,mkPart,mkKnit,mkAspect,mkLabRowExt,mkAspRowExt,isQuantTy,stripQuant,hnmToTyCon)
 %%]
 
 %%[6_1 hs import(Maybe)
@@ -203,6 +203,7 @@ mkRec r = Ty_App tyRec r
 mkAspect ag asp = mkTyConApp hsnAspect [ag,asp]
 mkLabRowExt l ty r = mkTyConApp (hsnLabRowExt l) [ty,r]
 mkAspRowExt p dir attr ty r = mkTyConApp (hsnAspRowExt p dir attr) [ty,r]
+hnmToTyCon = Ty_Con
 %%]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -242,7 +243,11 @@ isTyVar t = case t of
   (Ty_Var _ _) -> True
   _            -> False
 
+isQuantTy (Ty_Quant quant tv ty) = True
+isQuantTy _ = False
 
+stripQuant (Ty_Quant quant tv ty) = ty
+stripQuant _ = error "EHTy.stripQuant"
 %%]
 
 

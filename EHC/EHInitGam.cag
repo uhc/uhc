@@ -43,8 +43,8 @@ SEM AGItf
 	  loc.(emptyAsp,unq3) = mkEmptyAspect @unq2
 	  loc.(aspExts,unq4) = mkAspExts @aspExtHNs @unq3
 	  loc.(knit,unq5) = mkKnitGam @unq4
-	  loc.aspExtHNs = [ ((getProdNm p),i, dir, attr) 
-	      		    	| (p,nt,i) <- @prodGam, dir <- Syn:[Inh j | j <- [0..i]], attr <- @expr.attrs]
+	  loc.aspExtHNs = [ (p,length cs - 1,dir,attr) 
+	      		    	| (nt,p,cs) <- @grammar, dir <- Syn:[Inh j | j <- [0..length cs - 1]], attr <- @expr.attrs]
 
  
 {
@@ -80,23 +80,22 @@ mkEmptyAspect unq =
   let (nextUnq,ag) = mkNewUID unq
   in ([(hsnEmptyAspect, ValGamInfo $ mkTyQu TyQu_Forall [ag] (mkAspect (mkTyVar ag) tyEmptyRow))],nextUnq)
 
-getProdNm (DataConstr_Constr (HNm prod) _) = prod
-
 genAspGam nms = map (\n -> (n,ValGamInfo (tyInt))) (hsnEmptyAspect:nms)
 
 
 mkAspExts [] unq      = ([],unq)
 mkAspExts ((prod,i,dir,attr):aspNms) unq  = 
-  let (nextUnq,[ag,asp,t]) = mkNewUIDL 3 unq
+  let (nextUnq,[ag,nt,asp,t]) = mkNewUIDL 4 unq
       (rs,finalUnq)   = mkAspExts aspNms nextUnq
-  in ((hsnExtAspect prod i dir attr, mkAspExtTy (prod,dir,attr) (ag,asp,t)) : rs, finalUnq)
+  in ((hsnExtAspect prod i dir attr, mkAspExtTy (prod,dir,attr) (ag,nt,asp,t)) : rs, finalUnq)
 
-mkAspExtTy (prod,dir,attr) (ag,asp,t) = ValGamInfo $ mkTyQu TyQu_Forall [ag,asp,t] 
-                     (mkLacks (Aspect prod dir attr,varAsp) (mkTyArrow [mkTyArrow [varAG] varT, mkAspect varAG varAsp] (mkAspect varAG (mkAspRowExt prod dir attr varT varAsp ))))
+mkAspExtTy (prod,dir,attr) (ag,nt,asp,t) = ValGamInfo $ mkTyQu TyQu_Forall [ag,nt,asp,t] 
+                     (mkLacks (Aspect prod dir attr,varAsp) (mkTyArrow [mkTyArrow [varAG,varNT] varT, mkAspect varAG varAsp] (mkAspect varAG (mkAspRowExt prod dir attr varT varAsp ))))
                       where
                       varT    = mkTyVar t
                       varAG   = mkTyVar ag
                       varAsp  = mkTyVar asp
+		      varNT   = mkTyVar nt
 
 mkKnitGam unq = 
    let (nextUnq,[ag,asp,nt,inh,syn,rest]) = mkNewUIDL 6 unq
@@ -106,10 +105,11 @@ mkKnitGam unq =
        varInh  = mkTyVar inh
        varSyn  = mkTyVar syn
        knitPred ty = mkKnit (varAsp,varNT,varInh,varSyn) ty
-       partPred ty = mkPart (varAsp,(mkTyVar rest),varAG) ty
-       knitTy = knitPred (partPred (mkTyArrow [mkAspect varAG varAsp,varNT, mkRec varInh] (mkRec varSyn))) 
+       partPred ty = mkPart (varAsp,(mkTyVar rest),varAG) ty --add partpred
+       knitTy = knitPred ((mkTyArrow [mkAspect varAG varAsp,varNT, mkRec varInh] (mkRec varSyn))) 
        quantKnitTy = mkTyQu TyQu_Forall [ag,asp,nt,inh,syn,rest] knitTy
    in ((hsnKnit, ValGamInfo quantKnitTy),nextUnq)
+
 }
 
 

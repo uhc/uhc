@@ -26,6 +26,7 @@ toRow r
                  in Cons l t (toRow r')
   | isTyVar r = let (Ty_Var tv c) = r
 		in RowVar tv c
+  | isQuantTy r = toRow (stripQuant r)
   | otherwise = error $  "Invalid row:\n" ++ show r
 
 fromRow :: Row -> Ty
@@ -70,47 +71,78 @@ isEmpty _	= False
 
 isVar (RowVar _ _) = True
 isVar _ = False
---Predicate simplification for lacks and partition
-simplify :: [Pred] -> [Pred]
-simplify = concatMap simplifyPred
 
-simplifyPred :: Pred -> [Pred]
-simplifyPred p = case p of
-	       (Pred_Lacks l r)    -> simplifyLacks l (toRow r)
-	       (Pred_Part r1 r2 r) -> simplifyPart (toRow r1) (toRow r2) (toRow r)
-	       (Pred_Knit ag nt inh syn) -> simplifyKnit (toRow ag) nt (toRow inh) (toRow syn)
+--Predicate simplification and improvement
+simplifyImprove synPred uq preds cnstr =
+  let (impCnstrs,uq') = improve uq preds
+      subPreds = impCnstrs |=> preds
+      (simpPreds,uq'') = simplify synPred uq' subPreds
+  in if simpPreds == preds 
+     then (simpPreds,impCnstrs |=> cnstr) 
+     else trace ("simplify and improve") simplifyImprove synPred uq'' simpPreds (impCnstrs |=> cnstr)
+
+
+--Predicate simplification for lacks and partition
+simplify synPred uq [] = ([],uq)
+simplify synPred uq (p:ps) = let (simpP,uq') = simplifyPred synPred uq p
+				 (recurse,finalUnq) = simplify synPred uq' ps
+				 preds = trace (show (simpP ++ recurse)) (simpP ++ recurse)
+			     in (simpP ++ recurse,finalUnq)
+
+simplifyPred synPred uq p = 
+  case p of
+    (Pred_Lacks l r)    -> (simplifyLacks l (toRow r),uq)
+    (Pred_Part r1 r2 r) -> (simplifyPart (toRow r1) (toRow r2) (toRow r),uq)
+    (Pred_Knit ag nt inh syn) -> simplifyKnit synPred uq (toRow ag) nt (toRow inh) (toRow syn)
 	       
 simplifyLacks l (Empty)        = []
 simplifyLacks l (Cons l' ty r) = if l /= l' then simplifyLacks l r
 					    else error $ "Unresolvable constraint:\n" ++ show (Pred_Lacks l (fromRow r))
 simplifyLacks l r@(RowVar v c) = [predLacks l r]
 
-simplifyPart (Empty) r2 r 
-  | equivRow r2 r  = []
-  | otherwise      = error $ "Unresolvable constraint:\n" ++ show (Pred_Part (fromRow Empty) (fromRow r2) (fromRow r))
-simplifyPart (Cons l ty r1) r2 r
-  | elemRow l ty r = simplifyPred (predLacks l r2) ++ simplifyPart r1 r2 (remLab l r)
-  | otherwise      = error "EHSimplify.simplifyPart"
-simplifyPart r1@(RowVar v c) r2 r = [predPart r1 r2 r]
+simplifyPart r1 r2 (Empty) 
+  | isEmpty r1 && isEmpty r2  = []
+  | isVar r1 || isVar r2 = [predPart r1 r2 Empty]
+  | otherwise      = error $ "Unresolvable constraint:\n" ++ show (Pred_Part (fromRow r1) (fromRow r2) (fromRow Empty))
+simplifyPart r1 r2 row@(Cons l ty r)
+  | elemRow l ty r1 = simplifyLacks l r2 ++ simplifyPart (remLab l r1) r2 r
+  | elemRow l ty r2 = simplifyLacks l r1 ++ simplifyPart r1 (remLab l r2) r
+  | otherwise       = [predPart r1 r2 row]
+simplifyPart r1 r2 r@(RowVar _ _) = [predPart r1 r2 r]
 
-simplifyKnit ag nt inh syn = case ag of
+simplifyKnit synPred uq ag nt inh syn = case ag of
   (Empty) -> if isEmpty inh && isEmpty syn
-	     then []
-	     else error "Cannot resolve knitting constraint!"
-  (RowVar v c) ->  [predKnit ag nt inh syn]
-  (Cons l ty r) -> error "Not implemented yet"
+	     then ([],uq)
+	     else  ([predKnit ag nt inh syn],uq)
+  (RowVar v c) ->  ([predKnit ag nt inh syn],uq)
+  (Cons (Aspect prod Syn attr) ty r) -> 
+                   let (defRow,nt') = mkDefRow (Aspect prod Syn attr) ty synPred
+		       (nextUID,restAGVar) = mkNewUID uq
+		       (nextUID',restSynVar)  = mkNewUID nextUID
+		       restAG = RowVar restAGVar TyVarCateg_Plain
+		       restSyn = if nt == nt' then RowVar restSynVar TyVarCateg_Plain else syn
+		       singleSyn = Cons (Label attr) ty Empty
+		       (recurse,finalUID) = simplifyKnit synPred nextUID' restAG nt inh restSyn
+		       recurseSyn = if nt == nt' then simplifyPart singleSyn restSyn syn else []
+		   in (simplifyPart defRow restAG ag ++ recurseSyn ++ recurse, finalUID)
+
+mkDefRow (Aspect prod Syn attr) ty synPred =
+  let (nt,ps) = head (filter ( \ (nt,ps) -> prod `elem` ps) synPred)
+  in (foldr (\l r -> Cons l ty r) Empty (map (\p -> Aspect p Syn attr) ps), hnmToTyCon nt)
+mkDefRow _ _ _= error "not finished yet"
 
 --Predicate improvement
-improve :: UID -> [Pred] -> Cnstr
-improve _ []      =  emptyCnstr
-improve u (p:ps)  =  let (cnstr,unq) = improvePred u p
-		     in improve unq ps |=> cnstr 
+improve :: UID -> [Pred] -> (Cnstr,UID)
+improve unq []      =  (emptyCnstr,unq)
+improve u (p:ps)    =  let (cnstr,unq) = improvePred u p
+			   (subst,unq') = improve unq ps
+		       in (subst |=> cnstr,unq')
 
 improvePred :: UID -> Pred -> (Cnstr,UID)
 improvePred u p = case p of
                   (Pred_Lacks _ _)     -> (emptyCnstr,u)
 	          (Pred_Part r1 r2 r)  -> improvePart u (toRow r1) (toRow r2) (toRow r)
-	          (Pred_Knit ag nt inh syn) -> (emptyCnstr,u)
+	          (Pred_Knit ag nt inh syn) -> improveKnit u (toRow ag) nt (toRow inh) (toRow syn)
 
 improvePart u r1 r2 r 
   | disjoint r1 r2 = let (uid,nextUid) = mkNewUID u
@@ -118,6 +150,12 @@ improvePart u r1 r2 r
 			 fo	    = unify nextUid (fromRow joinedRows) (fromRow r)
 		     in  (foCnstr fo, foUniq fo)
   | otherwise = error $ "Unresolvable constraint: " ++ show (r1,r2,r) --(emptyCnstr,u)
+
+improveKnit u Empty nt inh syn  =
+  let fo = unify u (fromRow Empty) (fromRow (rowVar inh))
+      fo' = unify (foUniq fo) (foCnstr fo |=> (fromRow (rowVar syn))) (fromRow Empty)
+  in (foCnstr fo' |=> foCnstr fo,foUniq fo')
+improveKnit u ag nt inh syn = (emptyCnstr,u)
 
 rowVar (Cons _ _ r)    = rowVar r
 rowVar r@(RowVar _ _)  = r
