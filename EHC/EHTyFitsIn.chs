@@ -305,21 +305,6 @@ fitsIn opts uniq ty1 ty2
                 | otherwise         = bind fi v t
 %%]
 
-%%[6_1.fitsIn.Prelim - 4.fitsIn.Prelim
-fitsIn :: FIOpts -> UID -> Ty -> Ty -> FIOut
-fitsIn opts uniq ty1 ty2
-  =  fo
-  where
-            res fi t                = emptyFO  { foUniq = fiUniq fi, foTy = t
-                                               , foCoContraL = cocoGamLookup t cocoGam}
-            err fi e                = emptyFO {foUniq = fioUniq opts, foErrL = e}
-            manyFO fos              = foldr1 (\fo1 fo2 -> if foHasErrs fo1 then fo1 else fo2) fos
-            bind fi tv t            = (res fi t) {foCnstr = tv `cnstrUnit` t}
-            occurBind fi v t
-                | v `elem` ftv t    = err fi [Err_UnifyOccurs ty1 ty2 v t]
-                | otherwise         = bind fi v t
-%%]
-
 %%[4.fitsIn.unquant
             unquant fi t@(Ty_Quant _ _ _) hide howToInst
                 =   let  (u,uq)         = mkNewLevUID (fiUniq fi)

@@ -108,10 +108,11 @@ SEM AGItf
 ATTR AllDecl AllExpr [ valGam: ValGam | | ]
 
 SEM AGItf
-  | AGItf       expr        .  valGam               =   assocLToGam ((hsnEmptyRec, ValGamInfo tyEmptyRec) :
+  | AGItf       expr        .  valGam               =  assocLToGam ((hsnEmptyRec, ValGamInfo tyEmptyRec) :
     			       			    	  @recExtTys)
-                loc         .  recExtTys            =   mkRecExts @labels 
-                                                                  (snd (mkNewUIDL ((length @labels) * 2) startUID))                          
+                loc         . recExtTys             =  mkRecExts @labels @labUnqs
+
+
 {
 mkRecExts [] _ = []
 mkRecExts (l:ls) (t:r:vs) = (hsnRecExt l, mkRecExt l (t,r)) : mkRecExts ls vs

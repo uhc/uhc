@@ -24,9 +24,17 @@ SEM PatExpr
   | Var             (lhs.gUniq,loc.lUniq)                           =   mkNewLevUID     @lhs.gUniq
   | VarAs           (patExpr.gUniq,loc.lUniq)                       =   mkNewLevUID     @lhs.gUniq
   | Con             (lhs.gUniq,loc.lUniq)                           =   mkNewLevUID     @lhs.gUniq
-  
+%%]
+
+%%[2.AGItf.gUniq  
 SEM AGItf
   | AGItf           expr        .   gUniq                           =   startUID
+%%]
+
+%%[6_1.labels - 2.AGItf.gUniq
+SEM AGItf
+  | AGItf       loc         .  (newUnq,labUnqs)     =   mkNewUIDL ((length @labels) * 2) startUID
+                expr        . gUniq                 =   @newUnq
 %%]
 
 %%[2.Wild
