@@ -57,7 +57,8 @@ DPDS_MAIN			:= EHMainAG.ag EHInfer.ag EHInferExpr.ag \
 						EHInferCaseExpr.ag EHPretty.ag EHPrettyAST.ag EHAbsSyn.ag \
 						EHUniq.ag EHExtraChecks.ag EHGatherError.ag \
 						EHGenCode.ag \
-						EHResolvePred.ag EHInferClass.ag
+						EHResolvePred.ag EHInferClass.ag \
+                                                EHPredicates.ag
 DPDS_TY				:= EHTy.ag EHTyAbsSyn.ag
 DPDS_TY_PRETTY		:= EHTyPretty.ag EHTyCommonAG.ag EHTyAbsSyn.ag
 DPDS_TY_QUANT		:= EHTyQuantify.ag EHTyCommonAG.ag EHTyAbsSyn.ag
@@ -74,7 +75,7 @@ EHC					:= ehc
 EHC_MAIN			:= EHC
 EHC_LAG_FOR_AG		:= $(DPDS_ALL_MIN_TARG:.ag=.lag)
 EHC_LAG				:= $(EHC_LAG_FOR_AG) $(EHC_LAG_FOR_HS)
-EHC_LHS_FOR_HS		:= $(addsuffix .lhs,$(EHC_MAIN) EHCommon EHCnstr EHTyFitsIn EHGam EHPred EHParser FPath EHScanner EHScannerMachine)
+EHC_LHS_FOR_HS		:= $(addsuffix .lhs,$(EHC_MAIN) EHCommon EHCnstr EHTyFitsIn EHGam EHPred EHParser FPath EHScanner EHScannerMachine EHSimplify)
 EHC_LHS				:= $(EHC_LHS_FOR_HS)
 EHC_HS				:= $(EHC_LAG_FOR_HS:.lag=.hs) $(EHC_LHS_FOR_HS:.lhs=.hs)
 
@@ -402,7 +403,7 @@ test-lists:
 
 TMPL_TEST			:= mk/templ-test-dist.mk
 include $(TMPL_TEST)
-	
+
 # FILTER_EXISTS(files)
 FILTER_EXISTS		= \
 	for _f in $(1); do \

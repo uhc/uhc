@@ -62,9 +62,8 @@ SEM Expr
 
 %%[6_1.Let
 SEM Expr
-  | Let        loc          .  lQuValGam            :=  valGamInst1Exists @lUniq2 (valGamQuantify @gTyTvL (addPredGam @substPreds @lSubsValGam))
-    	       decls        .  patValGam            :=  gamPushGam (valGamInst1Exists @lUniq @decls.gathTySigGam) @lhs.valGam
-    	       loc	    .  substPreds	    =    (reverse (@decls.preds))
+  | Let        loc          .  lQuValGam            :=  valGamInst1Exists @lUniq2 (valGamQuantify @gTyTvL (addPredGam @finalPreds @lSubsValGam))
+    	       loc	    .  finalPreds	    =   simplifyPreds (@decls.tyCnstr |=> @decls.preds)
 %%]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -116,18 +115,29 @@ ATTR AllDecl AllExpr [ valGam: ValGam | | ]
 
 SEM AGItf
   | AGItf       expr        .  valGam               =  assocLToGam ((hsnEmptyRec, ValGamInfo tyEmptyRec) :
-    			       			    	  @recExtTys)
-                loc         . recExtTys             =  mkRecExts @labels @labUnqs
+    			       			    	  @recExtTys ++ @recSelTys)
+                loc         .  (recExtTys,labUnqs') =  mkRecExts @labels @labUnqs
+		loc	    .  recSelTys            =  mkRecSels @labels @labUnqs'
 
 
 {
-mkRecExts [] _ = []
-mkRecExts (l:ls) (t:r:vs) = (hsnRecExt l, mkRecExt l (t,r)) : mkRecExts ls vs
+mkRecExts [] unqs = ([],unqs)
+mkRecExts (l:ls) (t:r:vs) = 
+  let (rs,unqs) = mkRecExts ls vs
+  in ((hsnRecExt l, mkRecExt l (t,r)) : rs, unqs)
 mkRecExt l (t,r) = ValGamInfo $ mkTyQu TyQu_Forall [t,r] 
                      (mkLacks (l,varR) (mkTyArrow [varT, mkRec varR] (mkRec (mkRowExt l varT varR ))))
                       where
                       varT = mkTyVar t
                       varR = mkTyVar r
+
+mkRecSels [] _ = []
+mkRecSels (l:ls) (t:r:vs) = (hsnRecSel l, mkRecSel l (t,r)) : mkRecSels ls vs
+mkRecSel l (t,r) = ValGamInfo $ mkTyQu TyQu_Forall [t,r]
+	 		       (mkTyArrow [mkRec (mkRowExt l varT varR)] varT)
+                      where
+		      varT = mkTyVar t
+		      varR = mkTyVar r
 }
 %%]
 

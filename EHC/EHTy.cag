@@ -27,7 +27,7 @@
 %%[6 hs export(kiStar) 
 %%]
 
-%%[6_1 hs export(mkRowExt,kiRow,tyEmptyRow,tyEmptyRec,tyRowExt,Pred(..),isEmptyRow,matchRowExt,mkRec,mkLacks
+%%[6_1 hs export(mkRowExt,kiRow,tyEmptyRow,tyEmptyRec,tyRowExt,Pred(..),isEmptyRow,matchRowExt,mkRec,mkLacks, isTyVar)
 %%]
 
 %%[7 hs export(kiRow,tyRowEmpty,tyRowExtr,tyRecExtr,mkTyRec,mkTySum) 
@@ -225,6 +225,10 @@ matchRowExt (Ty_App (Ty_App (Ty_Con (HNm ('E':'x':'t':'R':'o':'w':'_':l))) ty) r
 matchRowExt _ = Nothing
 
 mkLacks (l,r) ty = Ty_QualTy (Pred_Lacks l r) ty
+
+isTyVar t = case t of
+  (Ty_Var _ _) -> True
+  _          -> False
 %%]
 
 

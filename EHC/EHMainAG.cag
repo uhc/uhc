@@ -18,6 +18,9 @@
 %%[3 hs import(EHTyQuantify,EHTyInstantiate)
 %%]
 
+%%[6_1 hs import (EHSimplify)
+%%]
+
 %%[8 hs import(EHCode)
 %%]
 
@@ -39,6 +42,9 @@ WRAPPER AGItf
 %%]
 
 %%[6 import(EHInferKiExpr)
+%%]
+
+%%[6_1 import(EHPredicates)
 %%]
 
 %%[8 import(EHGenCode)

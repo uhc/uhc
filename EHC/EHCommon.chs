@@ -51,7 +51,7 @@
 %%[6 export(hsnStar)
 %%]
 
-%%[6_1 export(hsnRow,hsnEmptyRow,hsnEmptyRec,hsnRec,hsnRowExt,hsnRecExt)
+%%[6_1 export(hsnRow,hsnEmptyRow,hsnEmptyRec,hsnRec,hsnRowExt,hsnRecExt,hsnRecSel)
 %%]
 
 %%[7 export(hsnRow,hsnRec,hsnSum,hsnRowEmpty,hsnIsRec,hsnIsSum)
@@ -143,6 +143,7 @@ hsnRowExt l                         =   HNm ("ExtRow_" ++ l)
 hsnRecExt l                         =   HNm ("extRec_" ++ l)
 hsnEmptyRec                         =   HNm "emptyRec"
 hsnRec                              =   HNm "Rec"
+hsnRecSel l			    =   HNm ("select_" ++ l)
 %%]
 
 

@@ -39,9 +39,6 @@
 %%[6 export(mkTGI)
 %%]
 
-%%[6_1 import Debug.Trace
-%%]
-
 %%[6_1 export (addPredGam)
 %%]
 
@@ -141,10 +138,11 @@ valGamQuantify globTvL
 %%]
 
 %%[6_1.addPredGam
-addPredGam :: [[Pred]] -> ValGam -> ValGam
-addPredGam preds gam = assocLToGam (zipWith addPreds (trace ("PREDS!!\n\n" ++ show preds) preds) (gamToAssocL gam))
+addPredGam :: [Pred] -> ValGam -> ValGam
+addPredGam preds = gamMap (\(n,t) -> (n, t {vgiTy = addPreds preds (vgiTy t)}))
   where
-  addPreds ps (n,t) = (n, ValGamInfo {vgiTy = foldr (Ty_QualTy) (vgiTy t) ps})
+  addPreds []      = id
+  addPreds (p:ps)  = Ty_QualTy p . addPreds ps 
 %%]
 
 %%[4.valGamInst1Exists

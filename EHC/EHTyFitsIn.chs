@@ -508,7 +508,7 @@ fitsIn opts uniq ty1 ty2
             fo  =  
               let fo'	      = u (emptyFI {fiUniq = uniq, fiFIOpts = opts, fiCoContra = fioCoContra opts}) ty1 ty2     
 		  traceFo     = trace ("Result:\n" ++ show( foTy fo') ++"\nPreds:\n" ++ show (foPreds fo')) fo'
-	      in fo' 
+	      in fo'
 %%]
 
 %%[6_1.removeLabel
