@@ -119,6 +119,19 @@ SEM TyQu
                     lhs     .   pp      =   text (showTyQu @self)
 %%]
 
+%%[6_1.PPPreds
+
+SEM Pred
+  | Lacks       loc.pp    = @ty.pp >|< text"\\" >|< text @label
+
+%%]
+
+%%[6_1.PPQualTy
+SEM Ty
+  | QualTy      loc.pp    =  text "(" >|< @pred.pp >|< text ")" >#< text "=>" >#< @ty.pp 
+%%]
+
+
 %%[7
 SEM Ty
   | Ext             loc     .   pp      =   ppAppTop  (hsnRow,@mkPPAppFun @appFunNm @appFunPP)

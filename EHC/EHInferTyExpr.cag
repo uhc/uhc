@@ -163,6 +163,14 @@ SEM TyExpr
   | Quant       lhs         .  ty                   =   Ty_Quant @qu @tv @tyExpr.ty
 %%]
 
+%%[6_1
+SEM TyExpr
+  | QualTyExpr lhs          .  ty                   = Ty_QualTy @predExpr.pred @tyExpr.ty
+ATTR PredExpr [ | | pred : Pred]
+SEM PredExpr
+  | LacksExpr  lhs          .  pred                 = Pred_Lacks @label @tyExpr.ty
+%%]
+
 %%[5
 ATTR TyExprs [ | | tyL: TyL ]
 

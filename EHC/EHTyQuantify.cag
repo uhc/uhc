@@ -77,6 +77,20 @@ SEM Ty
                 lhs         .   frTvLL      =   [@frTvL]
 %%]
 
+%% ATTR Pred [coco: CoContraVariance  tvIsBound:{TyVarId -> Bool} baseQu: TyQu | | quTy : SELF]
+%% ATTR Pred [ | | frTvLL :  {[TyVarIdL]}]
+
+%%[6_1.QualTyQuantification
+SEM Ty
+  | QualTy      loc . frTvLL  = @pred.frTvLL ++ @ty.frTvLL
+                lhs . quTy    = mkTyQu @hereQu @qBndTvL (Ty_QualTy @pred.quTy @ty.quTy)
+                loc . hereQu  = TyQu_Forall
+                loc . isQuLoc     =   @lhs.coco /= CoContraVariant
+                loc . (qBndTvL,tvIsBound) = tvarsToQuant True @lhs.tvIsBound @qHereTvL
+                loc . qHereTvL = listCombineUniq @frTvLL
+%%]
+
+
 %%[7
 SEM Ty
   | Ext         loc         .   frTvLL      =   @extTy.frTvLL ++ @ty.frTvLL

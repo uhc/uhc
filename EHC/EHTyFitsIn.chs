@@ -43,6 +43,12 @@
 %%[6 export(fitsInL)
 %%]
 
+%%[6_1 import List(union)
+%%]
+
+%%[6_1 import Maybe(isJust)
+%%]
+
 %%[9 import(EHPred)
 %%]
 
@@ -296,6 +302,21 @@ fitsIn opts uniq ty1 ty2
                 | otherwise         = bind fi v t
 %%]
 
+%%[6_1.fitsIn.Prelim - 4.fitsIn.Prelim
+fitsIn :: FIOpts -> UID -> Ty -> Ty -> FIOut
+fitsIn opts uniq ty1 ty2
+  =  fo
+  where
+            res fi t                = emptyFO  { foUniq = fiUniq fi, foTy = t
+                                               , foCoContraL = cocoGamLookup t cocoGam}
+            err fi e                = emptyFO {foUniq = fioUniq opts, foErrL = e}
+            manyFO fos              = foldr1 (\fo1 fo2 -> if foHasErrs fo1 then fo1 else fo2) fos
+            bind fi tv t            = (res fi t) {foCnstr = tv `cnstrUnit` t}
+            occurBind fi v t
+                | v `elem` ftv t    = err fi [Err_UnifyOccurs ty1 ty2 v t]
+                | otherwise         = bind fi v t
+%%]
+
 %%[4.fitsIn.unquant
             unquant fi t@(Ty_Quant _ _ _) hide howToInst
                 =   let  (u,uq)         = mkNewLevUID (fiUniq fi)
@@ -371,6 +392,32 @@ fitsIn opts uniq ty1 ty2
                        rfo  = afo {foTy = rt, foCnstr = as |=> fs, foCoContraL = cor}
 %%]
 
+%%[6_1.fitsIn.Rows
+            u fi (Ty_QualTy preds ty) (Ty_QualTy preds' ty' )
+                     = error "EHTyFitsIn.chs QualTy"
+            u fi t (Ty_QualTy p ty ) 
+                     = error "EHTyFitsIn.chs QualTy"
+            u fi (Ty_QualTy preds ty) t 
+                     = error "EHTyFitsIn.chs QualTy"
+            u fi t r2
+                | isJust (matchRowExt t)
+                  = let Just (l,ty,r1) = matchRowExt t
+                        inserter  = calcInserter fi (l,ty) r2
+                        uq        = foUniq inserter
+                        i         = foCnstr inserter
+                        ir1       = i |=> r1 
+                        ir2       = i |=> r2
+                        ir2'      = removeLabel l ir2
+                        res       = u (fi {fiUniq = uq}) ir1 ir2'
+                        rt        = mkRowExt l (i |=> ty) (foTy res)
+                    in if foHasErrs inserter 
+                       then inserter
+                       else if foHasErrs res
+                            then res
+                            else emptyFO {foTy = rt, foCnstr = i |=> (foCnstr res)}
+%%]
+
+
 %%[7
             u fi t1@(Ty_Ext tr1 l1 te1)   t2@(Ty_Ext _ _ _)
                 =  case tyRowExtr l1 t2 of
@@ -388,6 +435,34 @@ fitsIn opts uniq ty1 ty2
             u fi t1                     t2          = err fi [Err_UnifyClash ty1 ty2 t1 t2]
 
             fo  = u (emptyFI {fiUniq = uniq, fiFIOpts = opts, fiCoContra = fioCoContra opts}) ty1 ty2
+%%]
+
+%%[6_1.fitsIn.Rest -4.fitsIn.Rest
+            u fi t1                     t2          = err fi [Err_UnifyClash ty1 ty2 t1 t2]
+-- calculating row inserters
+              --inVar
+            calcInserter fi (l,ty) (Ty_Var v f) = 
+              let (u,uq)  = mkNewLevUID (fiUniq fi)
+                  r       = Ty_Var uq f
+              in bind (fi {fiUniq = u}) v (mkRowExt l ty r)
+            calcInserter fi (l,ty) t
+              | isJust (matchRowExt t)
+                  = let Just (l' ,ty' ,r) = matchRowExt t
+                    in if l==l' 
+                       then u fi ty ty' --inHead
+                       else calcInserter fi (l,ty) r --inTail
+              | isEmptyRow t = err fi [Err_UnifyClash ty1 ty2 t  ty ]
+              | otherwise = error "calcInserter.EHTyFitsIn.chs"   
+            fo  = u (emptyFI {fiUniq = uniq, fiFIOpts = opts, fiCoContra = fioCoContra opts}) ty1 ty2     
+%%]
+
+%%[6_1.removeLabel
+removeLabel l t = if isEmptyRow t 
+                  then t 
+                  else let (l', ty, r) = maybe (error "removeLabel.EHTyFitsIn.chs") id (matchRowExt t)
+                       in if l' == l then r
+                                     else mkRowExt l' ty (removeLabel l r)
+  
 %%]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

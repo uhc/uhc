@@ -78,6 +78,10 @@ SEM Ty
   | App         loc         .   isArrowRoot     =   @appIsArrow && @isSpineRoot
 %%]
 
+%%[6_1.PredAppSpinePos
+ATTR Pred [ appSpinePos : Int  | | ]
+%%]
+
 %%[7
 SEM Ty
   | Ext         ty          .   appSpinePos     =   0

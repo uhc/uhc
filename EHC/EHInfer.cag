@@ -191,6 +191,11 @@ ATTR AllDataField [ | tyGam: TyGam | ]
                                                           , (hsnChar,   mkTGI tyChar kiStar)
 %%]
 
+
+%%[initTyGam.6.1
+                                                          , (hsnRec,    mkTGI (Ty_Con hsnRec) (mkTyArrow [kiRow] kiStar))
+                                                          , (hsnEmptyRow, mkTGI tyEmptyRow kiRow)
+%%]
 %%[initTyGam.7
                                                           , (hsnRow,    mkTGI (Ty_Con hsnUnknown) kiRow)
                                                           , (hsnRec,    mkTGI (Ty_Con hsnRec) ([kiRow] `mkTyArrow` kiStar))
@@ -204,13 +209,26 @@ SEM AGItf
                                                           ]
 %%]
 
-%%[6
+%%[6.initTyGam
 SEM AGItf
   | AGItf       loc         .  tyGam                :=  assocLToGam
 %%@initTyGam.6
                                                           ]
                             .  kiCnstr              =   emptyCnstr
 %%]
+
+%%[6_1.initTyGam
+SEM AGItf
+  | AGItf       loc         .  tyGam                :=  assocLToGam (
+%%@initTyGam.6
+%%@initTyGam.6.1
+                                                          ] ++ @recExts)
+                            .  recExts              =   [ (hsnRowExt l, mkTGI (Ty_Con $ hsnRowExt l) (mkTyArrow [kiStar,kiRow] kiRow)) 
+                                                              | l <- @labels]
+                            .  kiCnstr              :=   emptyCnstr
+                            .  labels               = ["l1","l2","l3"]
+%%]
+
 
 %%[7
 SEM AGItf
@@ -229,7 +247,7 @@ SEM AGItf
                                                           , (hsnStar,   KiGamInfo kiStar)
 %%]
 
-%%[6
+%%[6.kiGam
 ATTR AllExpr AllTyExpr AllData AllCase AllDecl [ kiGam: KiGam | | ]
 
 SEM AGItf
@@ -237,6 +255,17 @@ SEM AGItf
 %%@initKiGam.6
                                                           ]
 %%]
+
+%%[6_1.kiGam - 6.kiGam
+ATTR AllExpr AllTyExpr AllData AllCase AllDecl [ kiGam: KiGam | | ]
+
+SEM AGItf
+  | AGItf       loc         .  kiGam                =   assocLToGam
+%%@initKiGam.6
+                                                          , (hsnRow,    KiGamInfo kiRow)
+                                                          ]
+%%]
+
 
 %%[initKiGam.7
                                                           , (hsnRow,    KiGamInfo kiRow)

@@ -27,6 +27,9 @@
 %%[6 hs export(kiStar) 
 %%]
 
+%%[6_1 hs export(mkRowExt,kiRow,tyEmptyRow,tyEmptyRec,tyRowExt,Pred(..),isEmptyRow,matchRowExt,mkRec,mkLacks
+%%]
+
 %%[7 hs export(kiRow,tyRowEmpty,tyRowExtr,tyRecExtr,mkTyRec,mkTySum) 
 %%]
 
@@ -191,6 +194,11 @@ mkTyFreshProd :: Int -> Ty
 mkTyFreshProd = mkTyFreshProdFrom startUID
 %%]
 
+%%[6_1.mkRowExt hs
+mkRowExt l ty r = mkTyConApp (hsnRowExt l) [ty,r]
+mkRec r = Ty_App tyRec r
+%%]
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Constants
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -203,6 +211,22 @@ tyChar  = Ty_Con hsnChar
 %%[6 hs
 kiStar  = Ty_Con hsnStar
 %%]
+
+%%[6_1.rowConstants hs
+kiRow       = Ty_Con hsnRow
+tyEmptyRow  = Ty_Con hsnEmptyRow
+tyRowExt l  = Ty_Con (hsnRowExt l)
+tyRec       = Ty_Con hsnRec
+tyEmptyRec  = Ty_App tyRec tyEmptyRow
+
+isEmptyRow  = (==) tyEmptyRow
+matchRowExt (Ty_App (Ty_App (Ty_Con (HNm ('E':'x':'t':'R':'o':'w':'_':l))) ty) r) 
+  = Just (l,ty,r)
+matchRowExt _ = Nothing
+
+mkLacks (l,r) ty = Ty_QualTy (Pred_Lacks l r) ty
+%%]
+
 
 %%[7 hs
 kiRow       = Ty_Con hsnRow

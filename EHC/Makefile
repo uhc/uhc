@@ -168,7 +168,7 @@ all: afp-full ehcs $(SHUFFLE_DOC_PDF)
 #include mk/ehfiles.mk
 
 ### Versioned ehc's
-VERSIONS			:= $(sort 1 2 3 4 5 6 7 8)
+VERSIONS			:= $(sort 1 2 3 4 5 6 6_1 7 8)
 VERSION_LAST		:= $(word $(words $(VERSIONS)), $(VERSIONS))
 VERSION_FIRST		:= $(word 1, $(VERSIONS))
 
@@ -358,7 +358,7 @@ $(RULER): $(RULER_DIR)/$(RULER_AG) $(wildcard lib/*.hs)
 $(RULER_DOC_PDF): $(RULER_DIR)/RulerDoc.tex $(RULER)
 	cd `dirname $<` ; pdflatex `basename $<`
 
-ehcs: $(EHC_V1) $(EHC_V2) $(EHC_V3) $(EHC_V4) $(EHC_V5) $(EHC_V6) $(EHC_V7) $(EHC_V8)
+ehcs: $(EHC_V1) $(EHC_V2) $(EHC_V3) $(EHC_V4) $(EHC_V5) $(EHC_V6) $(EHC_V6_1) $(EHC_V7) $(EHC_V8)
 
 clean:
 	rm -rf $(AFP_DERIV) $(SHUFFLE_DERIV) a.out \

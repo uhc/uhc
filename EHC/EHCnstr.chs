@@ -135,6 +135,20 @@ instance Substitutable Ty where
                  otherwise                      -> []
 %%]
 
+%%[6_1.SubstitutableTy -4.SubstitutableTy
+%%@SubstitutableTyHead.3
+%%@SubstitutableTyVar.3
+%%@SubstitutableTyQuant.4
+                               Ty_QualTy ps tp  -> Ty_QualTy (s |=> ps) (st isBound tp)
+                               otherwise        ->  t
+%%@SubstitutableTyTVarsHead
+%%@SubstitutableTyTVarsVar.3
+%%@SubstitutableTyTVarsQuant.4
+                 Ty_QualTy ps tp                -> ftv ps `union` ftv tp
+                 otherwise                      -> []
+%%]
+
+
 %%[7.SubstitutableTy -4.SubstitutableTy
 %%@SubstitutableTyHead.3
 %%@SubstitutableTyVar.3
@@ -160,6 +174,13 @@ instance Substitutable Cnstr where
                                            where sl2' = deleteFirstsBy (\(v1,_) (v2,_) -> v1 == v2) sl2 sl1
   ftv                  (Cnstr sl)      =   ftv . map snd $ sl
 %%]
+
+%%[6_1.SubstitutablePred
+instance Substitutable Pred where
+  sub |=> (Pred_Lacks l r) = Pred_Lacks l (sub |=> r)
+  ftv (Pred_Lacks l r) = ftv r
+%%]
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Pretty printing

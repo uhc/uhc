@@ -145,6 +145,13 @@ SEM Decl
   | KiSig       loc     .  pp       =   @nm >#< "::" >#< @kiExpr.pp
 %%]
 
+%%[6_1
+SEM TyExpr
+  | QualTyExpr  loc . pp = text "(" >|< @predExpr.pp >|< text ")" >#< text "=>" >#< @tyExpr.pp
+SEM PredExpr
+  | LacksExpr   loc . pp = @tyExpr.pp >|< text "\\" >|< text @label
+%%]
+
 %%[7
 ATTR RecExpr RowTyExpr RecPatExpr DataFields [ | | ppL: PP_DocL ]
 

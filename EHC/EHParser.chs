@@ -46,6 +46,11 @@ keywordsText  =  [ "in", "forall", "exists", "data", "case"
                  ] ++ offsideTrigs
 %%]
 
+%%[6_1.keywordsText -5.keywordsText
+keywordsText  =  [ "case", "in", "data", "forall", "exists" ] ++ offsideTrigs
+%%]
+
+
 %%[8.keywordsText -5.keywordsText
 keywordsText  =  [ "in", "forall", "exists", "data", "case"
                  , "foreign", "import", "jazy"
@@ -78,6 +83,11 @@ keywordsOps   =  [ "=", "\\", show hsnArrow, "::", "@", "...", ".", "|" ]
 %%[6.keywordsOps -5.keywordsOps
 keywordsOps   =  [ "=", "\\", show hsnArrow, "::", "@", "...", ".", "|", "*" ]
 %%]
+
+%%[6_1.keywordsOps -6.keywordsOps
+keywordsOps   =  [ "=", "\\", show hsnArrow, "::", "@", "...", ".", "|", "*", "=>" ]
+%%]
+
 
 %%[9.keywordsOps -6.keywordsOps
 keywordsOps   =  [ "=", "\\", show hsnArrow, "::", "@", "...", ".", "|", "*", "=>" ]
@@ -444,6 +454,11 @@ pTyExprPrefix   =    sem_TyExpr_Quant
                      <*>  pVar <* pKey "."
 %%]
 
+%%[pTyExprPrefix.6.1
+                <|> sem_TyExpr_QualTyExpr <$> 
+                      (flip sem_PredExpr_LacksExpr <$> pTyExprBase <* pKey "\\" <*> pVarid <* pKey "=>")
+%%]
+
 %%[pTyExprPrefix.9
                 <|>  (\pr -> mkArrow tyExprAlg (sem_TyExpr_Pred pr))
                      <$>  pPacked (pKeyw hsnOImpl) (pKeyw hsnCImpl) pPrExpr
@@ -500,6 +515,11 @@ pTyExprPrefix   =    sem_TyExpr_Quant
 
 %%[4.pTyExprPrefix
 %%@pTyExprPrefix.4
+%%]
+
+%%[6_1.pTyExprPrefix -4.pTyExprPrefix
+%%@pTyExprPrefix.4
+%%@pTyExprPrefix.6.1
 %%]
 
 %%[9.pTyExprPrefix -4.pTyExprPrefix
