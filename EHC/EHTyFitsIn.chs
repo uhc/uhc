@@ -169,6 +169,19 @@ emptyFO     =  FIOut    {  foCnstr           =   emptyCnstr          ,  foTy    
                         }
 %%]
 
+%%[6_1.FIOut -(4.FIOut)
+data FIOut  =  FIOut    {  foCnstr           ::  Cnstr               ,  foTy              ::  Ty
+                        ,  foUniq            ::  UID                 ,  foCoContraL       ::  CoCoInfo
+                        ,  foErrL            ::  ErrL                ,  foPreds           :: [Pred]
+                        }
+
+emptyFO     =  FIOut    {  foCnstr           =   emptyCnstr          ,  foTy              =   Ty_Any
+                        ,  foUniq            =   startUID            ,  foCoContraL       =   []
+                        ,  foErrL            =   []                  ,  foPreds           =   []
+                        }
+%%]
+
+
 %%[1.foHasErrs
 foHasErrs :: FIOut -> Bool
 foHasErrs = not . null . foErrL
@@ -305,6 +318,21 @@ fitsIn opts uniq ty1 ty2
                 | otherwise         = bind fi v t
 %%]
 
+%%[6_1.fitsIn.Prelim - (4.fitsIn.Prelim)
+fitsIn :: FIOpts -> UID -> Ty -> Ty -> FIOut
+fitsIn opts uniq ty1 ty2
+  =  fo
+  where
+            res fi t                = emptyFO  { foUniq = fiUniq fi, foTy = t
+                                               , foCoContraL = cocoGamLookup t cocoGam}
+            err fi e                = emptyFO {foUniq = fioUniq opts, foErrL = e}
+            manyFO fos              = foldr1 (\fo1 fo2 -> if foHasErrs fo1 then fo1 else addPreds fo2 (foPreds fo1)) fos
+            bind fi tv t            = (res fi t) {foCnstr = tv `cnstrUnit` t}
+            occurBind fi v t
+                | v `elem` ftv t    = err fi [Err_UnifyOccurs ty1 ty2 v t]
+                | otherwise         = bind fi v t
+%%]
+
 %%[4.fitsIn.unquant
             unquant fi t@(Ty_Quant _ _ _) hide howToInst
                 =   let  (u,uq)         = mkNewLevUID (fiUniq fi)
@@ -314,6 +342,18 @@ fitsIn opts uniq ty1 ty2
                                                    else  id
                     in   (fi {fiUniq = u},uqt,back)
 %%]
+
+%%[6_1.fitsIn.unquant - 4.fitsIn.unquant
+            unquant fi t@(Ty_Quant _ _ ty) hide howToInst
+                =   let  (u,uq)         = mkNewLevUID (fiUniq fi)
+                         (uqt,rtvs)     = tyInst1Quants uq howToInst t
+                         back           = if hide  then  \fo ->  let  s = cnstrFilter (const.not.(`elem` rtvs)) (foCnstr fo)
+                                                                 in   fo {foCnstr = s, foTy = s |=> t}
+                                                   else  id
+                         preds          = removePreds ty
+                    in   (fi {fiUniq = u},uqt,back,preds)
+%%]
+
 
 %%[4.fitsIn.Base
             u fi t1                     t2
@@ -334,6 +374,31 @@ fitsIn opts uniq ty1 ty2
                                                     = occurBind fi v2 t1
 %%]
 
+%%[6_1.fitsIn.Rows
+            u fi (Ty_QualTy pred ty) (Ty_QualTy pred' ty' )
+                     = addPreds (u fi ty ty') [pred,pred']
+            u fi t (Ty_QualTy pred ty ) 
+                     = addPreds (u fi t ty) [pred]
+            u fi (Ty_QualTy pred ty) t 
+                     = addPreds (u fi ty t) [pred]
+            u fi t r2
+                | isJust (matchRowExt t)
+                  = let Just (l,ty,r1) = matchRowExt t
+                        inserter  = calcInserter fi (l,ty) r2
+                        uq        = foUniq inserter
+                        i         = foCnstr inserter
+                        ir1       = i |=> r1 
+                        ir2       = i |=> r2
+                        ir2'      = removeLabel l ir2
+                        res       = u (fi {fiUniq = uq}) ir1 ir2'
+                        rt        = mkRowExt l (i |=> ty) (foTy res)
+                    in if foHasErrs inserter 
+                       then inserter
+                       else if foHasErrs res
+                            then res
+                            else emptyFO {foTy = rt, foCnstr = i |=> (foCnstr res)}
+%%]
+
 %%[4.fitsIn.QLR
             u fi t1@(Ty_Quant q1 _ _)   t2@(Ty_Quant q2 _ _)
                 | fiCoContra fi == CoContraVariant && q1 == q2
@@ -342,21 +407,46 @@ fitsIn opts uniq ty1 ty2
                        (fi2,uqt2,_) = unquant fi1 t2 False instCoConst
 %%]
 
-%%[4.fitsIn.QR
+%%[6_1.fitsIn.QLR - 4.fitsIn.QLR
+            u fi t1@(Ty_Quant q1 _ _)   t2@(Ty_Quant q2 _ _)
+                | fiCoContra fi == CoContraVariant && q1 == q2
+                                                    = addPreds fo (preds1 ++ preds2)
+                where  (fi1,uqt1,_,preds1) = unquant fi t1 False instCoConst
+                       (fi2,uqt2,_,preds2) = unquant fi1 t2 False instCoConst
+		       fo                  = u fi2 uqt1 uqt2
+%%]
+
+%%[4.fitsIn.QLR
+            u fi t1@(Ty_Quant q1 _ _)   t2@(Ty_Quant q2 _ _)
+                | fiCoContra fi == CoContraVariant && q1 == q2
+                                                    = u fi2 uqt1 uqt2
+                where  (fi1,uqt1,_) = unquant fi  t1 False instCoConst
+                       (fi2,uqt2,_) = unquant fi1 t2 False instCoConst
+%%]
+
+%%[6_1.fitsIn.QR - 4.fitsIn.QR
             u fi t1                     t2@(Ty_Quant _ _ _)
                 | fiCoContra fi /= CoContraVariant && fioLeaveRInst (fiFIOpts fi)
-                                                    = back2 (u fi2 t1 uqt2)
-                where (fi2,uqt2,back2) = unquant fi t2 False instCoConst
+                                                    = back2 (addPreds fo preds2 )
+                where (fi2,uqt2,back2,preds2) = unquant fi t2 False instCoConst
+		      fo		      = u fi2 t1 uqt2
             u fi t1                     t2@(Ty_Quant _ _ _)
                 | fiCoContra fi /= CoContraVariant && not (fioLeaveRInst (fiFIOpts fi))
-                                                    = back2 (u fi2 t1 uqt2)
-                where (fi2,uqt2,back2) = unquant fi t2 True instContra
+                                                    = back2 (addPreds fo preds2)
+                where (fi2,uqt2,back2,preds2) = unquant fi t2 True instContra
+		      fo		      = u fi2 t1 uqt2
 %%]
 
 %%[4.fitsIn.QL
             u fi t1@(Ty_Quant _ _ _)    t2
                 | fiCoContra fi /= CoContraVariant  = u fi1 uqt1 t2
                 where (fi1,uqt1,back1) = unquant fi t1 False instCoConst
+%%]
+
+%%[6_1.fitsIn.QL - 4.fitsIn.QL
+            u fi t1@(Ty_Quant _ _ _)    t2
+                | fiCoContra fi /= CoContraVariant  = addPreds (u fi1 uqt1 t2) preds1
+                where (fi1,uqt1,back1,preds1) = unquant fi t1 False instCoConst
 %%]
 
 %%[4.fitsIn.Var2
@@ -379,32 +469,6 @@ fitsIn opts uniq ty1 ty2
                        rt   = Ty_App (as |=> foTy ffo) (foTy afo)
                        rfo  = afo {foTy = rt, foCnstr = as |=> fs, foCoContraL = cor}
 %%]
-
-%%[6_1.fitsIn.Rows
-            u fi (Ty_QualTy preds ty) (Ty_QualTy preds' ty' )
-                     = error "EHTyFitsIn.chs QualTy"
-            u fi t (Ty_QualTy p ty ) 
-                     = error "EHTyFitsIn.chs QualTy"
-            u fi (Ty_QualTy preds ty) t 
-                     = error "EHTyFitsIn.chs QualTy"
-            u fi t r2
-                | isJust (matchRowExt t)
-                  = let Just (l,ty,r1) = matchRowExt t
-                        inserter  = calcInserter fi (l,ty) r2
-                        uq        = foUniq inserter
-                        i         = foCnstr inserter
-                        ir1       = i |=> r1 
-                        ir2       = i |=> r2
-                        ir2'      = removeLabel l ir2
-                        res       = u (fi {fiUniq = uq}) ir1 ir2'
-                        rt        = mkRowExt l (i |=> ty) (foTy res)
-                    in if foHasErrs inserter 
-                       then inserter
-                       else if foHasErrs res
-                            then res
-                            else emptyFO {foTy = rt, foCnstr = i |=> (foCnstr res)}
-%%]
-
 
 %%[7
             u fi t1@(Ty_Ext tr1 l1 te1)   t2@(Ty_Ext _ _ _)
@@ -441,14 +505,10 @@ fitsIn opts uniq ty1 ty2
                        else calcInserter fi (l,ty) r --inTail
               | isEmptyRow t = err fi [Err_UnifyClash ty1 ty2 t  ty ]
               | otherwise = error "calcInserter.EHTyFitsIn.chs"   
-            fo  = 
-              let (preds1,t1) = removePreds ty1
-		  (preds2,t2) = removePreds ty2
-		  fo'	      = u (emptyFI {fiUniq = uniq, fiFIOpts = opts, fiCoContra = fioCoContra opts}) t1 t2     
-		  preds       = foCnstr fo' |=> (preds1 ++ preds2)
-		  resTy       = addPreds (preds) (foTy fo')
-		  traceTy     = trace ("Result:\n" ++ show resTy ++ "\nPreds:\n" ++ show (preds1 ++ preds2)) resTy
-	      in fo' {foTy = traceTy}
+            fo  =  
+              let fo'	      = u (emptyFI {fiUniq = uniq, fiFIOpts = opts, fiCoContra = fioCoContra opts}) ty1 ty2     
+		  traceFo     = trace ("Result:\n" ++ show( foTy fo') ++"\nPreds:\n" ++ show (foPreds fo')) fo'
+	      in fo' 
 %%]
 
 %%[6_1.removeLabel
@@ -457,19 +517,13 @@ removeLabel l t = if isEmptyRow t
                   else let (l', ty, r) = maybe (error "removeLabel.EHTyFitsIn.chs") id (matchRowExt t)
                        in if l' == l then r
                                      else mkRowExt l' ty (removeLabel l r)
-addPreds [] ty = ty
-addPreds (p:ps) t = case t of
-  (Ty_Quant qu tv ty) -> Ty_Quant qu tv (addPreds (p:ps) ty)
-  ty                  -> Ty_QualTy p (addPreds ps ty)
 
-removePreds ty  -- error (show ty)
+removePreds ty
   = case ty of
-              (Ty_Quant qu tv ty) -> let (ps,t) = removePreds ty
-	                     	     in (ps,Ty_Quant qu tv t)
-              (Ty_QualTy p ty)    -> let (ps,t) = removePreds ty
-                                     in (p:ps, t)
-              t		      -> ([],t) 
+              (Ty_QualTy p ty)    -> p : removePreds ty
+              _		          -> []
 
+addPreds fo preds = fo {foPreds = foPreds fo ++ preds}
 %%]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -1,0 +1,22 @@
+let g = extRec_l2 2
+    r1 = extRec_l1 1 emptyRec
+    {- [  ] -}
+    {- [ r1:forall a . (a\l1) => Rec (ExtRow_l1 Int EmptyRow)
+       , g:forall a . (a\l2) => Rec a -> Rec (ExtRow_l2 Int a) ] -}
+in g
+
+Problem - substitution missing in predicate (no application of decls.tyCnstr to preds)
+
+
+
+let g = extRec_l2 2
+    r1 = extRec_l1 1 emptyRec
+    r2 = g r1
+    f = extRec_l1 1 (extRec_l2 2 emptyRec)
+    {- [  ] -}
+    {- [ f:(ExtRow_l2 Int EmptyRow\l1) => (EmptyRow\l2) => Rec (ExtRow_l1 Int (ExtRow_l2 Int EmptyRow))
+       , r2:forall a . Rec (ExtRow_l2 Int (ExtRow_l1 Int a))
+       , r1:(EmptyRow\l1) => Rec (ExtRow_l1 Int EmptyRow)
+       , g:forall a . (ExtRow_l1 Int a\l2) => Rec (ExtRow_l1 Int a) -> Rec (ExtRow_l2 Int (ExtRow_l1 Int a)) ] -}
+
+Problem type of g influenced by usage of g in rhs of r2

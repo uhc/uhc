@@ -60,6 +60,13 @@ SEM Expr
                 loc         .  lQuValGam            :=  valGamInst1Exists @lUniq2 . valGamQuantify @gTyTvL $ @lSubsValGam
 %%]
 
+%%[6_1.Let
+SEM Expr
+  | Let        loc          .  lQuValGam            :=  valGamInst1Exists @lUniq2 (valGamQuantify @gTyTvL (addPredGam @substPreds @lSubsValGam))
+    	       decls        .  patValGam            :=  gamPushGam (valGamInst1Exists @lUniq @decls.gathTySigGam) @lhs.valGam
+    	       loc	    .  substPreds	    =    (reverse (@decls.preds))
+%%]
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Final type
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

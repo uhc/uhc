@@ -148,6 +148,25 @@ SEM Expr
                                                         in   fo {foTy = foCnstr fo |=> @funTy}
 %%]
 
+%%[6_1.Preds
+ATTR Expr [ | | preds : {[Pred]}]
+SEM Expr
+  | IConst      loc         .  preds                =  []
+  | CConst      loc         .  preds                =  []
+  | Con         loc         .  preds                =  foPreds @fo
+  | Var         loc         .  preds                =  foPreds @fo
+  | App         loc         .  preds     	    =  @func.preds ++ @arg.preds
+  | Lam         loc         .  preds		    =  foPreds @foKnFun ++ @body.preds
+
+ATTR Decls [ | | preds : {[[Pred]]}]
+SEM Decls
+  | Nil         lhs         .  preds                = []
+  | Cons        lhs         .  preds                = @hd.preds : @tl.preds
+ATTR Decl [ | | preds : {[Pred]}]
+SEM Decl
+  | TySig Data KiSig    lhs.preds = []
+%%]
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Records
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
