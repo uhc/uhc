@@ -151,7 +151,25 @@ SEM TyExpr
 SEM PredExpr
   | LacksExpr   loc . pp = @tyExpr.pp >|< text "\\" >|< text @label
   | PartExpr    loc . pp = @r1.pp >#< text "+" >#< @r2.pp >#< text "~" >#< @r.pp
-  | KnitExpr    loc . pp = text "knit" >#< @ag.pp >#< text "to" >#< @nt.pp >#< @i.pp >#< @s.pp
+  | KnitExpr    loc . pp = text "knit" >#< @ag.pp >#< text "to" >#< @nt.pp >#< @inh.pp >#< @syn.pp
+
+ATTR Expr [ | | isAspect : Bool ]
+SEM Expr
+  | Var               loc . isAspect     = isAspExt @nm
+  | App		      loc . isAspect	 = @func.isAspect || @arg.isAspect
+  | IConst CConst Con lhs . isAspect     = False
+    
+SEM Expr
+  | App		loc . pp := if @arg.isAspect then @func.pp  >-< @arg.pp
+    		      	      		     else @func.pp >#< @arg.pp
+  | AppTop      loc . pp := @aspect $ ppAppTop  (@expr.appFunNm,@expr.appFunPP)
+                                                  @expr.appArgPPL @expr.pp
+                loc . aspect = if @expr.isAspect then (\x -> "aspect" >-< indent 2 x) else id
+
+SEM Decl
+  | Val          lhs     .  pp       :=  (@patExpr.pp >#< "=" >#< @aspect @expr.pp)
+    		 loc	 .  aspect   =   if @expr.isAspect then (\x -> "aspect" >-< indent 2 x) else id
+ 
 %%]
 
 %%[7

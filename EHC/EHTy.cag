@@ -238,6 +238,8 @@ mkKnit (ag,nt,i,s) ty = Ty_QualTy (Pred_Knit ag nt i s) ty
 isTyVar t = case t of
   (Ty_Var _ _) -> True
   _            -> False
+
+
 %%]
 
 

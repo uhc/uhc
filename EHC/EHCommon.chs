@@ -51,7 +51,7 @@
 %%[6 export(hsnStar)
 %%]
 
-%%[6_1 export(hsnRow,hsnEmptyRow,hsnEmptyRec,hsnRec,hsnRowExt,hsnRecExt,hsnRecSel,hsnJoin,hsnSplit)
+%%[6_1 export(hsnRow,hsnEmptyRow,hsnEmptyRec,hsnRec,hsnRowExt,hsnRecExt,hsnRecSel,hsnJoin,hsnSplit,Dir(..),isLhs,hsnEmptyAspect,Prod(..),isAspExt)
 %%]
 
 %%[7 export(hsnRow,hsnRec,hsnSum,hsnRowEmpty,hsnIsRec,hsnIsSum)
@@ -90,6 +90,39 @@ instance Show HsName where
 %%[1
 instance PP HsName where
   pp h = pp (show h)
+%%]
+
+%%[6_1.HsName.type -1.HsName.type
+data HsName                         =   HNm String
+                                    |   AspExt Prod Dir String 
+				    |   EmptyAspect deriving Ord
+
+data Prod = Prod String [String] deriving Ord
+                                    
+instance Eq HsName where
+  (HNm a) == (HNm b) = a == b
+  (AspExt p d s) == (AspExt p' d' s') = p == p' && d == d' && s == s'
+  EmptyAspect == EmptyAspect = True
+  _ == _ = False
+
+instance Eq Prod where
+  (Prod p cs) == (Prod p' cs') = p == p' && (length cs) == (length cs')
+
+data Dir = Inh Int | Syn deriving (Eq,Ord)
+
+instance Show Dir where
+  show (Inh i)     = "inherited"
+  show (Syn)     = "synthesized"
+
+instance Show HsName where
+  show (HNm s    )  = s
+  show (AspExt (Prod con vars) Syn attr)  = "| (" ++ con ++ " " ++ unwords vars ++ ") lhs." ++ attr ++ " ="
+  show (AspExt (Prod con vars) (Inh i) attr) = "| (" ++ con ++ " " ++ unwords vars ++ ")" ++ (vars!!i) ++ "." ++ attr ++ " ="
+  show (EmptyAspect) = ""
+
+isAspExt (AspExt _ _ _) = True
+isAspExt (EmptyAspect) = True
+isAspExt _ = False
 %%]
 
 %%[7.HsName.type -1.HsName.type
@@ -146,6 +179,11 @@ hsnRec                              =   HNm "Rec"
 hsnRecSel l			    =   HNm ("select_" ++ l)
 hsnJoin	  			    =   HNm "join"
 hsnSplit			    =   HNm "split"
+
+isLhs ("lhs") = True
+isLhs _       = False
+
+hsnEmptyAspect = EmptyAspect
 %%]
 
 

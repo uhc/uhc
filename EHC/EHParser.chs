@@ -21,6 +21,9 @@
 %%[4 import (EHTy)
 %%]
 
+%%[6_1 import (List)
+%%]
+
 %%[7.Scanner -1.Scanner import(EHScanner)
 %%]
 
@@ -47,7 +50,7 @@ keywordsText  =  [ "in", "forall", "exists", "data", "case"
 %%]
 
 %%[6_1.keywordsText -5.keywordsText
-keywordsText  =  [ "case", "in", "data", "forall", "exists" ] ++ offsideTrigs
+keywordsText  =  [ "case", "in", "data", "forall", "exists", "aspect", "lhs" ] ++ offsideTrigs
 %%]
 
 
@@ -85,7 +88,7 @@ keywordsOps   =  [ "=", "\\", show hsnArrow, "::", "@", "...", ".", "|", "*" ]
 %%]
 
 %%[6_1.keywordsOps -6.keywordsOps
-keywordsOps   =  [ "=", "\\", show hsnArrow, "::", "@", "...", ".", "|", "*", "=>" ]
+keywordsOps   =  [ "=", "\\", show hsnArrow, "::", "@", "...", ".", "|", "*", "=>", "@" ]
 %%]
 
 
@@ -594,6 +597,13 @@ pExpr           =    pExprPrefix <*> pExpr
 %%@pExprBaseCommon.5
 %%]
 
+%%[6_1.pExprBase - 5.pExprBase
+%%@pExprBaseCommon.1
+%%@pExprBaseParenProd.1
+%%@pExprBaseCommon.5
+               <|> pKey "aspect" *> pAspect
+%%]
+
 %%[7.pExprBase -5.pExprBase
 %%@pExprBaseCommon.1
 %%@pExprBaseCommon.5
@@ -654,6 +664,36 @@ pCaseAlt        =    sem_CaseAlt_Pat  <$>  pPatExpr <* pKey "->" <*> pExpr
 
 pTyVars         =    pFoldr (sem_TyVars_Cons,sem_TyVars_Nil) pTyVar
 pTyVar          =    sem_TyVar_Var <$> pVar
+%%]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Parser for Apects
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%[7.pAspect
+pAspect   ::   EHParser T_Expr
+pAspect = undefined -- (pList_ng pSemRule)
+%%]
+
+%%[6_1
+pAspect :: EHParser T_Expr
+pAspect = foldr sem_Expr_App emptyAspect <$> pList_ng pSemRule
+  where
+  emptyAspect = sem_Expr_Var hsnEmptyAspect
+
+pSemRule :: EHParser T_Expr 
+pSemRule =  (\p t e -> sem_Expr_App (mkAspectExt p t) e)  <$ pKey "|" <*> pRulePattern <*> pTarget <* pKey "=" <*> pExpr
+  where
+  pRulePattern = pParens (Prod <$> pConid <*> pList pVarid)
+  pTarget = (,) <$> pKey "lhs" <* pKey "." <*> pVarid
+            <|> (,) <$> pVarid  <* pKey "." <*> pVarid
+
+mkAspectExt :: Prod -> (String,String) -> T_Expr
+mkAspectExt prod@(Prod con vars) (target,attr)  
+  | isLhs target = sem_Expr_Var (AspExt prod Syn attr)
+  | target `elem` vars = let inh = maybe (error "Impossible occurred") id (elemIndex target vars)
+			 in sem_Expr_Var (AspExt prod (Inh inh) attr)
+  | otherwise = error $ "Undefined child " ++ target ++ " of pattern (" ++ con ++ (foldr (\x y -> x ++ (' ':y)) "" vars)  
 %%]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

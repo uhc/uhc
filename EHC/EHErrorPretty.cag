@@ -99,6 +99,12 @@ SEM Err
                                                         @ty1 @ty2 (mkTyVar @tvar) @ty2detail
 %%]
 
+%%[6_1
+SEM Err
+  | InvalidAspPat	lhs	.  pp   =   ppMsgErr    "Invalid patterns in attribute definitions:"
+                                                        (ppListSep "" "" ", " @nmL)
+%%]
+
 %%[7
 SEM Err
   | MissingRowLabel     lhs     .  pp   =   ppMsgErr    "Missing label in row"

@@ -170,6 +170,7 @@ ATTR PredExpr [ | | pred : Pred]
 SEM PredExpr
   | LacksExpr  lhs          .  pred                 = Pred_Lacks @label @tyExpr.ty
   | PartExpr   lhs          .  pred		    = Pred_Part @r1.ty @r2.ty @r.ty
+  | KnitExpr   lhs	    .  pred		    = Pred_Knit @ag.ty @nt.ty @inh.ty @syn.ty
 %%]
 
 %%[5

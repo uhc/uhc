@@ -97,7 +97,7 @@ DATA TyExpr
 DATA PredExpr
   | LacksExpr label : {String} tyExpr : TyExpr
   | PartExpr  r1,r2,r : TyExpr
-  | KnitExpr  ag,nt,i,s : TyExpr
+  | KnitExpr  ag,nt,inh,syn : TyExpr
 %%]
 
 %%[7

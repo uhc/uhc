@@ -40,6 +40,11 @@ DATA Err
                         tvar       : {TyVarId}           ^^  ty2detail  : Ty
 %%]
 
+%%[6.1
+DATA Err
+  | InvalidAspPat	nmL	   : {[HsName]}
+%%]
+
 %%[7
 DATA Err
   | MissingRowLabel     nm         : {HsName}            ^^  ty         : Ty

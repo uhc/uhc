@@ -58,7 +58,7 @@ DPDS_MAIN			:= EHMainAG.ag EHInfer.ag EHInferExpr.ag \
 						EHUniq.ag EHExtraChecks.ag EHGatherError.ag \
 						EHGenCode.ag \
 						EHResolvePred.ag EHInferClass.ag \
-                                                EHPredicates.ag
+                                                EHPredicates.ag 
 DPDS_TY				:= EHTy.ag EHTyAbsSyn.ag
 DPDS_TY_PRETTY		:= EHTyPretty.ag EHTyCommonAG.ag EHTyAbsSyn.ag
 DPDS_TY_QUANT		:= EHTyQuantify.ag EHTyCommonAG.ag EHTyAbsSyn.ag
