@@ -74,6 +74,8 @@ DATA Ty
 
 DATA Pred
   | Lacks label : {String} ty : Ty
+  | Knit  ag,nt,inh,syn : Ty
+  | Part  r1,r2,r : Ty
 %%]
 
 %%[7
