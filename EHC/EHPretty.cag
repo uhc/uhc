@@ -164,19 +164,35 @@ SEM Expr
   | AppTop 	      lhs . isRec	 = False
     
 SEM Expr
-  | App		loc . pp := if @arg.isAspect then @func.pp  >-< @arg.pp
-    		      	      		     else @func.pp >#< @arg.pp
+  | App		loc . pp := if @arg.isAspect then @func.pp >-<  @arg.pp
+    		      	      		     else if @func.isAspect then @func.pp >#< @arg.ppDesugared
+					     	     		    else @func.pp >#< @arg.pp
   | AppTop      loc . pp := if @expr.isRec then @ppRec
     		      	       		   else ppAppTop  (@expr.appFunNm,@expr.appFunPP)
                                                   @expr.appArgPPL @expr.pp
 		loc . ppRec  = "{|" >#< ppListAltSep False "," @expr.gatherRecPPL >#< "|}"
   | AspectRoot  loc . pp = text "aspect" >-< indent 2 @expr.pp
 
+ATTR Expr [ | | ppDesugared : PP_Doc]
+SEM Expr
+  | Lam lhs.ppDesugared = if @lhs.sugarLevel > 0 then @body.ppDesugared else @pp
+  | Let lhs.ppDesugared = if @lhs.sugarLevel > 0 then @body.ppDesugared else @pp
+  | App lhs.ppDesugared = @func.ppDesugared >#< @arg.ppDesugared
+  | IConst CConst Con Var AppTop Parens Case lhs.ppDesugared = @pp
+  
+ATTR Expr Decls Decl CaseAlts CaseAlt [ sugarLevel : Int | | ]
+SEM Expr
+  | Lam body.sugarLevel = @lhs.sugarLevel - 1
+  | Let body.sugarLevel = @lhs.sugarLevel - 1
+  | App arg.sugarLevel = if @func.isAspect then 3 else @lhs.sugarLevel
+
+SEM AGItf
+  | AGItf expr.sugarLevel = 0
 
 ATTR Expr [ | | gatherRecPPL USE {++} {[@pp]} : PP_DocL]
 SEM Expr
-  | App lhs.gatherRecPPL = if @func.isRec then ( @func.gatherRecPPL) ++ @arg.gatherRecPPL else [@pp]  
-  | Var lhs.gatherRecPPL = if isEmptyRec @nm then [text "\b"] else [@pp]
+  | App         lhs . gatherRecPPL = if @func.isRec then ( @func.gatherRecPPL) ++ @arg.gatherRecPPL else [@pp]  
+  | Var         lhs . gatherRecPPL = if isEmptyRec @nm then [text "\b"] else [@pp]
   | Lam         loc . gatherRecPPL       =   ["\\" >|< @arg.pp >#< "->" >#< @body.pp ]
 %%]
 
