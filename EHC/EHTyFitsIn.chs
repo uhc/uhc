@@ -493,6 +493,7 @@ fitsIn opts uniq ty1 ty2
             u fi t1                     t2          = err fi [Err_UnifyClash ty1 ty2 t1 t2]
 -- calculating row inserters
               --inVar
+	    calcInserter _ _ _ = undefined
             calcInserter fi (l,ty) (Ty_Var v f) = 
               let (u,uq)  = mkNewLevUID (fiUniq fi)
                   r       = Ty_Var uq f

@@ -62,7 +62,8 @@ SEM Expr
 
 %%[6_1.Let
 SEM Expr
-  | Let        loc          .  lQuValGam            :=  valGamInst1Exists @lUniq2 (valGamQuantify @gTyTvL (addPredGam @finalPreds (@impCnstrs |=> @lSubsValGam)))
+  | Let        loc          .  lQuValGam            :=  valGamInst1Exists @lUniq2 (valGamQuantify @gTyTvL @finalGam)
+    	       loc 	    .  finalGam		    =   addPredGam @finalPreds (@impCnstrs |=> @lSubsValGam)
     	       loc	    .  substPreds	    =   @decls.tyCnstr |=> @decls.preds
     	       loc          .  impCnstrs	    =   improve @substPreds
     	       loc	    .  finalPreds	    =   simplify (@impCnstrs |=> @substPreds) 
