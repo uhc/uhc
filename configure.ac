@@ -1,5 +1,5 @@
 ### Process this file with autoconf to produce a configure script.
-AC_INIT(EH, [0.1], [ehc-developers@cs.uu.nl, http://www.cs.uu.nl/wiki/Ehc/WebHome])
+AC_INIT(EH, [0.1], [uhc-developers@cs.uu.nl, http://www.cs.uu.nl/wiki/UHC/WebHome])
 
 ### version of autoconf used (and required)
 #AC_PREREQ(2.52)
@@ -393,10 +393,10 @@ fi
 
 case $cc_version in
   4.0.1)
-    cc_std_flag="-std=c99"
+    cc_std_flag="-std=gnu99"
     ;;
   *)
-    cc_std_flag="-std=c99"
+    cc_std_flag="-std=gnu99"
     ;;
 esac
 AC_SUBST(CC_STD_FLAG,$cc_std_flag)
