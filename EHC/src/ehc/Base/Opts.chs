@@ -230,6 +230,7 @@ data EHCOpts
       ,  ehcOptBuiltinNames   ::  EHBuiltinNames
       -- ,  ehcOptUseInplace     ::  Bool              -- use inplace runtime libraries
       ,  ehcOptEnvironment    ::  EHCEnvironment    -- runtime environment
+      ,  ehcOptHeliumFrontend ::  Bool              -- use the alternative helium frontend
       
 %%]]
 %%[[9
@@ -416,7 +417,7 @@ defaultEHCOpts
       ,  ehcOptBuiltinNames     =   mkEHBuiltinNames (const id)
       -- ,  ehcOptUseInplace       =   True
       ,  ehcOptEnvironment      =   undefined   -- filled in at toplevel
-      
+      ,  ehcOptHeliumFrontend   =   False      
 %%]]
 %%[[(8 codegen grin)
       ,  ehcOptGenCmt           =   True
@@ -538,6 +539,7 @@ ehcCmdLineOpts
      ,  Option ""   ["gen-rtsinfo"]      (ReqArg oRTSInfo "<nr>")             "flags for rts info dumping (default=0)"
      ,  Option ""   ["dump-grin-stages"] (boolArg optDumpGrinStages)          "dump intermediate Grin and Silly transformation stages (no)"
      ,  Option ""   ["early-mod-merge"]  (boolArg optEarlyModMerge)           "merge modules early, at Core stage (no)"
+     ,  Option ""   ["helium-frontend"]  (boolArg optHeliumFrontend)          "use the alternative helium frontend (no)"
 %%][100
 %%]]
 %%[[(8 codegen java)
@@ -869,6 +871,7 @@ optSetGenCmt         o b = o { ehcOptGenCmt         = b }
 optSetGenDebug       o b = o { ehcOptGenDebug       = b }
 optDumpGrinStages    o b = o { ehcOptDumpGrinStages = b {-, ehcOptEmitGrin = b -} }
 optEarlyModMerge     o b = o { ehcOptEarlyModMerge  = b }
+optHeliumFrontend    o b = o { ehcOptHeliumFrontend = b }
 %%]
 
 %%[(20 codegen)
