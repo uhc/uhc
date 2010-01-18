@@ -44,6 +44,7 @@ processArgs args =
       , Option "w" ["no-warnings"]          (NoArg NoWarnings) "do not show warnings"
       , Option "X" ["more-options"]         (NoArg MoreOptions) "show more compiler options"
       , Option ""  ["info"]                 (ReqArg Information "NAME") "display information about NAME"
+	  , Option ""  ["helium-frontend"]      (NoArg HeliumFrontend) "option used to direct the EHC compiler to use the Helium front-end"
       ]
       ++
       -- More options
@@ -101,6 +102,8 @@ data Option
    | TreeWalkInorderTopFirstPost | TreeWalkInorderTopLastPost | SolverSimple | SolverGreedy
    | SolverTypeGraph | SolverCombination | SolverChunks | UnifierHeuristics
    | SelectConstraintNumber Int
+   -- Extra option for EHC pipelining
+   | HeliumFrontend
  deriving Eq
 
 lvmPathFromOptions :: [Option] -> Maybe String

@@ -72,6 +72,11 @@
 %%[(102 codegen) import({%{EH}Core.Trf.Strip})
 %%]
 
+-- Helium Main import
+%%[8 import (qualified Helium.Compiler.Main)
+%%]
+%%[8 import (System.Exit(exitSuccess))
+%%]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Main, compiling
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -102,7 +107,7 @@ main
          ;  userDir <- ehcenvDir (envkey opts2)
          ;  let opts3 = opts2 {ehcOptUserDir = userDir}
 %%]]
-         ;  when (ehcOptHeliumFrontend opts3) (print "helium are go!")
+         ;  when (ehcOptHeliumFrontend opts3) ((Helium.Compiler.Main.main args) >> exitSuccess)
          ;  case ehcOptImmQuit opts3 of
               Just immq     -> handleImmQuitOption immq opts3
               _ | null errs ->

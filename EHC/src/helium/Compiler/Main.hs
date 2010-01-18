@@ -20,9 +20,11 @@ import Helium.Compiler.Args
 import Helium.Utils.Utils
 import Lvm.Common.TopSort
 
-main :: IO ()
-main = do
-    args                <- getArgs
+-- Arguments have to be passed through EHC and cannot be read from the command line
+-- Therefore we have to pass the command line arguments as parameter
+main :: [String] -> IO ()
+main args = do
+    --args                <- getArgs
     (options, fullName) <- processArgs args
     
     lvmPathFromOptionsOrEnv <- case lvmPathFromOptions options of 
