@@ -102,6 +102,7 @@ main
          ;  userDir <- ehcenvDir (envkey opts2)
          ;  let opts3 = opts2 {ehcOptUserDir = userDir}
 %%]]
+         ;  when (ehcOptHeliumFrontend opts3) (print "helium are go!")
          ;  case ehcOptImmQuit opts3 of
               Just immq     -> handleImmQuitOption immq opts3
               _ | null errs ->

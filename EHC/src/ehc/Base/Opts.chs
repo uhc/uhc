@@ -539,7 +539,6 @@ ehcCmdLineOpts
      ,  Option ""   ["gen-rtsinfo"]      (ReqArg oRTSInfo "<nr>")             "flags for rts info dumping (default=0)"
      ,  Option ""   ["dump-grin-stages"] (boolArg optDumpGrinStages)          "dump intermediate Grin and Silly transformation stages (no)"
      ,  Option ""   ["early-mod-merge"]  (boolArg optEarlyModMerge)           "merge modules early, at Core stage (no)"
-     ,  Option ""   ["helium-frontend"]  (boolArg optHeliumFrontend)          "use the alternative helium frontend (no)"
 %%][100
 %%]]
 %%[[(8 codegen java)
@@ -605,6 +604,9 @@ ehcCmdLineOpts
 %%[[(8 codegen)
      ,  Option ""   ["tycore"]              (OptArg oUseTyCore "opt[,...]")      ("temporary/development: use typed core. opts: " ++ (concat $ intersperse " " $ Map.keys tycoreOptMp))
 %%]]
+%%[[8
+	 ,  Option ""   ["helium-frontend"]     (NoArg optHeliumFrontend)            "use the alternative helium frontend (default=off)"
+%%]]
      ]
 %%]
 %%[1
@@ -667,6 +669,7 @@ ehcCmdLineOpts
                                       
 %%]]
 %%[[8
+         optHeliumFrontend    o = o { ehcOptHeliumFrontend = True }
          oCode       ms  o =  case ms of
                                 Just "hs"    -> o { ehcOptEmitHS           = True   }
                                 Just "eh"    -> o { ehcOptEmitEH           = True   }
@@ -871,7 +874,6 @@ optSetGenCmt         o b = o { ehcOptGenCmt         = b }
 optSetGenDebug       o b = o { ehcOptGenDebug       = b }
 optDumpGrinStages    o b = o { ehcOptDumpGrinStages = b {-, ehcOptEmitGrin = b -} }
 optEarlyModMerge     o b = o { ehcOptEarlyModMerge  = b }
-optHeliumFrontend    o b = o { ehcOptHeliumFrontend = b }
 %%]
 
 %%[(20 codegen)
