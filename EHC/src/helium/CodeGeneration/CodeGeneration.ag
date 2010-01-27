@@ -32,6 +32,10 @@ import qualified Lvm.Core.Core as Core
 import qualified Lvm.Lvm.Module as Module
 import qualified Lvm.Common.Byte as Byte
 import qualified Lvm.Core.CoreParse as CoreParse
+
+-- Steve
+import qualified EH100.Core as EHCore
+import EH100.Base.HsName
 }
 {
 import Helium.Syntax.UHA
@@ -49,6 +53,9 @@ INCLUDE "ToCoreDecl.ag"
 INCLUDE "ToCoreExpr.ag"
 INCLUDE "ToCorePat.ag"
 INCLUDE "ToCoreName.ag"
+
+-- Transformation into EHCore
+INCLUDE "ToEHCoreExpr.ag"
 
 -- UHA
 INCLUDE "../Syntax/UHA_Syntax.ag"

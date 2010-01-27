@@ -52,6 +52,7 @@ LIB_HELIUM_AG_DEP_SRC = \
     $(SRC_HELIUM_PREFIX)StaticAnalysis/Directives/TS_PatternMatching.ag \
     $(SRC_HELIUM_PREFIX)CodeGeneration/ToCoreDecl.ag \
     $(SRC_HELIUM_PREFIX)CodeGeneration/ToCoreExpr.ag \
+    $(SRC_HELIUM_PREFIX)CodeGeneration/ToEHCoreExpr.ag \
     $(SRC_HELIUM_PREFIX)CodeGeneration/ToCoreModule.ag \
     $(SRC_HELIUM_PREFIX)CodeGeneration/ToCoreName.ag \
     $(SRC_HELIUM_PREFIX)CodeGeneration/ToCorePat.ag
@@ -170,7 +171,7 @@ $(LIB_HELIUM_CABAL_DRV): $(HELIUM_MKF) $(LIB_HELIUM_ALL_DRV_HS)
 	$(call FUN_GEN_CABAL_LIB \
 	, $(LIB_HELIUM_PKG_NAME) \
 	, $(EH_VERSION_SHORT) \
-	, mtl parsec Top Lvm\
+	, mtl parsec Top Lvm EH100\
 	, $(CABAL_OPT_ALLOW_UNDECIDABLE_INSTANCES) OverlappingInstances \
 	, Helium library \
 	, $(subst $(PATH_SEP),.,$(patsubst $(BLD_LIBHELIUM_PREFIX)%.hs,$(LIB_HELIUM_QUAL_PREFIX)%, $(LIB_HELIUM_ALL_DRV_HS) )) \
