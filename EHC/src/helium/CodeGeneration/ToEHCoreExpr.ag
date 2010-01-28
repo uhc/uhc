@@ -2,12 +2,10 @@
 -- -- Expressions                                                        --
 -- ------------------------------------------------------------------------
 
-{-
-SEM MaybeExpression [ | | core : { Maybe EHCore.CExpr } ]
-    | Nothing       lhs.core = Nothing
-    | Just          lhs.core = Just @expression.core
+SEM MaybeExpression [ | | ehcore : { Maybe EHCore.CExpr } ]
+    | Nothing       lhs.ehcore = Nothing
+    | Just          lhs.ehcore = Just @expression.ehcore
     --  expression               : Expression
--}
 
 ATTR Expressions [ | | ehcore USE { : } { [] } : { [EHCore.CExpr] } ]
 
@@ -20,7 +18,7 @@ SEM Expression [ | | ehcore : { EHCore.CExpr } ]
     --  range                    : Range
     --  name                     : Name
 
-    | Constructor        lhs.ehcore = EHCore.CExpr_Var (hsnFromString @name.self)
+    | Constructor        lhs.ehcore = EHCore.CExpr_Var (hsnFromString $ getNameName @name.self) -- Core.Con (Core.ConId (idFromName @name.self))
     --  range                    : Range
     --  name                     : Name
 
@@ -28,12 +26,23 @@ SEM Expression [ | | ehcore : { EHCore.CExpr } ]
     --  range                    : Range
     --  expression               : Expression
 
-    | NormalApplication  lhs.ehcore = foldl (\x y -> EHCore.CExpr_App x y undefined) @function.ehcore @arguments.ehcore
+    | NormalApplication  lhs.ehcore = EHCore.mkCExprApp @function.ehcore @arguments.ehcore
     --  range                    : Range
     --  function                 : Expression
     --  arguments                : Expressions
 
-    | InfixApplication   lhs.ehcore = undefined
+    | InfixApplication   lhs.ehcore =
+        case (@leftExpression.ehcore, @rightExpression.ehcore) of
+            (Nothing, Nothing) -> @operator.ehcore
+            (Just l , Nothing) -> EHCore.mkCExprApp1 @operator.ehcore l
+            (Nothing, Just r ) -> EHCore.mkCExprLam1 parameterName
+                                    (EHCore.mkCExprApp @operator.ehcore [EHCore.CExpr_Var parameterName, r])
+            {-
+                -- At most one new variable is needed. Consider
+                --  (. (+ 3))  ==  \x -> (.) x (\x -> (+) x 3)
+            -}
+            (Just l , Just r ) -> EHCore.mkCExprApp @operator.ehcore [l,r]
+
 --        case (@leftExpression.core, @rightExpression.core) of
 --            (Nothing, Nothing) -> @operator.core
 --            (Just l , Nothing) -> CExpr_App @operator.core l
@@ -301,8 +310,9 @@ SEM Literal [ | | ehcore : { EHCore.CExpr } ]
     --  range                    : Range
     --  value                    : String -- without the quotes
 
-{-
 {
+parameterName = hsnFromString "parameter$"
+{-
 
 -- Function "bind" is used in the translation of do-expressions
 bind :: Core.Expr -> Core.Expr -> Core.Expr
@@ -317,6 +327,6 @@ chainCode cores =
     case cores of
         [core] -> core Nothing
         (core:cores) -> core (Just (chainCode cores))
-}
-
 -}
+
+}
