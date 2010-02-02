@@ -53,6 +53,8 @@ LIB_HELIUM_AG_DEP_SRC = \
     $(SRC_HELIUM_PREFIX)CodeGeneration/ToCoreDecl.ag \
     $(SRC_HELIUM_PREFIX)CodeGeneration/ToCoreExpr.ag \
     $(SRC_HELIUM_PREFIX)CodeGeneration/ToEHCoreExpr.ag \
+    $(SRC_HELIUM_PREFIX)CodeGeneration/ToEHCoreModule.ag \
+    $(SRC_HELIUM_PREFIX)CodeGeneration/ToEHCorePat.ag \
     $(SRC_HELIUM_PREFIX)CodeGeneration/ToCoreModule.ag \
     $(SRC_HELIUM_PREFIX)CodeGeneration/ToCoreName.ag \
     $(SRC_HELIUM_PREFIX)CodeGeneration/ToCorePat.ag
@@ -107,6 +109,7 @@ LIB_HELIUM_HS_SRC = \
     $(SRC_HELIUM_PREFIX)CodeGeneration/DerivingShow.hs \
     $(SRC_HELIUM_PREFIX)CodeGeneration/DerivingEq.hs \
     $(SRC_HELIUM_PREFIX)CodeGeneration/CoreUtils.hs \
+    $(SRC_HELIUM_PREFIX)CodeGeneration/EHCoreUtils.hs \
     $(SRC_HELIUM_PREFIX)Utils/Utils.hs \
     $(SRC_HELIUM_PREFIX)Utils/Logger.hs \
     $(SRC_HELIUM_PREFIX)Utils/OSSpecific.hs \

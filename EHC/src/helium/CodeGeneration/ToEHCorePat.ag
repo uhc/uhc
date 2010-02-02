@@ -1,0 +1,13 @@
+{
+patternMatchFailEh :: String -> Range -> EHCore.CExpr
+patternMatchFailEh nodeDescription range =
+    varEh "$primPatternFailPacked"
+          `EHCore.mkCExprApp1` packedStringEh (
+                      nodeDescription ++ " ranging from " ++ 
+                      showPosition start ++ " to " ++ 
+                      showPosition (getRangeEnd range) ++ " in module " ++
+                      moduleFromPosition start
+                 )
+    where
+        start = getRangeStart range
+}

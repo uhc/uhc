@@ -36,6 +36,8 @@ import qualified Lvm.Core.CoreParse as CoreParse
 -- Steve
 import qualified EH100.Core as EHCore
 import EH100.Base.HsName
+import EH100.Base.Opts
+import Helium.CodeGeneration.EHCoreUtils
 }
 {
 import Helium.Syntax.UHA
@@ -56,6 +58,8 @@ INCLUDE "ToCoreName.ag"
 
 -- Transformation into EHCore
 INCLUDE "ToEHCoreExpr.ag"
+INCLUDE "ToEHCoreModule.ag"
+INCLUDE "ToEHCorePat.ag"
 
 -- UHA
 INCLUDE "../Syntax/UHA_Syntax.ag"
@@ -79,7 +83,7 @@ ATTR Module
 
 
 ATTR *
-   [ | | self : SELF ]
+   [ opts: EHCOpts | | self : SELF ]
 
 ATTR Body Declarations Declaration Expressions Expression Statements Statement
      Qualifiers Qualifier GuardedExpressions GuardedExpression 

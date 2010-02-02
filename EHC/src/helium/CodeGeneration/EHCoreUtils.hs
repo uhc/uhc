@@ -6,15 +6,19 @@
     Portability :  portable
 -}
 
-module Helium.CodeGeneration.CoreUtils
-    (   custom, customStrategy
+module Helium.CodeGeneration.EHCoreUtils
+    ({-   custom, customStrategy
     ,   stringToCore, coreList
     ,   let_, if_, app_, letrec_
     ,   cons, nil
-    ,   var, decl
-    ,   float, packedString
+    ,-}   varEh,{- decl
+    ,   float,-} packedStringEh
     ) where
 
+import qualified EH100.Core as EHCore
+import EH100.Base.HsName
+
+{-
 import Lvm.Core.Core as Core
 import Lvm.Common.Id
 import Char
@@ -91,10 +95,12 @@ nil = Con (ConId nilId)
 stringToCore :: String -> Expr
 stringToCore [x] = cons (Lit (LitInt (ord x))) nil
 stringToCore xs = var "$primPackedToString" `app_` packedString xs
+-}
 
-var :: String -> Expr
-var x = Var (idFromString x)
+varEh :: String -> EHCore.CExpr
+varEh = EHCore.CExpr_Var . hsnFromString
 
+{-
 --Core.Lit (Core.LitDouble (read @value))   PUSHFLOAT nog niet geimplementeerd
 float :: String -> Expr
 float f = 
@@ -111,6 +117,7 @@ decl isPublic x e =
         , valueValue = e
         , declCustoms = []
         }
+-}
 
-packedString :: String -> Expr
-packedString s = Lit (LitBytes (bytesFromString s))
+packedStringEh :: String -> EHCore.CExpr
+packedStringEh = EHCore.CExpr_String

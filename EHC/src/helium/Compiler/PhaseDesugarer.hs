@@ -43,6 +43,7 @@ en eigenlijk is afterTypeInferEnv te groot. alleen locale types en constructoren
                 dictionaryEnv
                 extraDecls
                 afterTypeInferEnv
+                undefined
                 toplevelTypes            
 
         strippedCoreModule = coreRemoveDead coreModule

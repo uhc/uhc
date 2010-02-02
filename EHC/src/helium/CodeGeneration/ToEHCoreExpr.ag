@@ -170,33 +170,32 @@ SEM Expression [ | | ehcore : { EHCore.CExpr } ]
     --  expression               : Expression
     --  recordExpressionBindings : RecordExpressionBindings
 
-{-
-ATTR Statements [ | | core USE { : } { [] } : { [Maybe Core.Expr -> Core.Expr] } ]
 
-SEM Statement [ | | core : { Maybe Core.Expr -> Core.Expr } ]
-    | Expression          lhs.core =
-            \rest -> 
+ATTR Statements [ | | ehcore USE { : } { [] } : { [Maybe EHCore.CExpr -> EHCore.CExpr] } ]
+
+SEM Statement [ | | ehcore : { Maybe EHCore.CExpr -> EHCore.CExpr } ]
+    | Expression          lhs.ehcore = undefined
+{-            \rest -> 
                 case rest of
                     Nothing   -> @expression.core
                     Just rest -> bind @expression.core (Core.Lam dummyId rest)
     --  range                    : Range
-    --  expression               : Expression
+    --  expression               : Expression-}
 
-    | Let                 declarations.patBindNr = 0
-                          declarations.isTopLevel = False
-                          lhs.core =
-            \rest ->
+    | Let   
+                          lhs.ehcore = undefined
+{-            \rest ->
                 case rest of
                     Nothing   -> internalError "ToCoreExpr" "Statement" "'let' can't be last in 'do'"
-                    Just rest -> letrec_ @declarations.decls rest 
+                    Just rest -> letrec_ @declarations.decls rest -}
     --  range                    : Range
     --  declarations             : Declarations
 
     -- let _nextClause = <throw exception> in
     -- let _ok = \_misc -> case _misc of { pattern -> ...; _ -> _nextClause }
     -- in expression >>= ok
-    | Generator           lhs.core =
-        \rest -> case rest of
+    | Generator           lhs.ehcore = undefined
+{-        \rest -> case rest of
             Nothing   -> internalError "ToCoreExpr" "Statement" "generator can't be last in 'do'"
             Just rest -> 
                 let_ nextClauseId (patternMatchFail "generator" @range.self)
@@ -206,32 +205,31 @@ SEM Statement [ | | core : { Maybe Core.Expr -> Core.Expr } ]
                             (patternToCore (parameterId, @pattern.self) rest)
                         )
                         (@expression.core `bind` Core.Var okId)
-                    )
+                    )-}
     --  range                    : Range
     --  pattern                  : Pattern
     --  expression               : Expression
 
 -- Not supported
 
-    | Empty               lhs.core =
-            \rest ->
+    | Empty               lhs.ehcore = undefined
+{-            \rest ->
                 case rest of 
                     Nothing   -> internalError "ToCoreExpr" "Statement" "empty statements not supported"
                     Just rest -> rest
-    --  range                    : Range
+    --  range                    : Range-}
 
 
 
-ATTR Qualifiers [ | | core USE { : } { [] } : { [Core.Expr -> Core.Expr] } ]
+ATTR Qualifiers [ | | ehcore USE { : } { [] } : { [EHCore.CExpr -> EHCore.CExpr] } ]
 
-SEM Qualifier [ | | core : { Core.Expr -> Core.Expr } ]
-    | Guard               lhs.core = \continue -> if_ @guard.core continue nil
+SEM Qualifier [ | | ehcore : { EHCore.CExpr -> EHCore.CExpr } ]
+    | Guard               lhs.ehcore = undefined -- \continue -> if_ @guard.core continue nil
     --  range                    : Range
     --  guard                    : Expression -- type: Boolean
 
-    | Let                 declarations.patBindNr = 0
-                          declarations.isTopLevel = False
-                          lhs.core = \continue -> letrec_ @declarations.decls continue
+    | Let             
+                          lhs.ehcore = undefined -- \continue -> letrec_ @declarations.decls continue
     --  range                    : Range
     --  declarations             : Declarations
    
@@ -240,8 +238,8 @@ SEM Qualifier [ | | core : { Core.Expr -> Core.Expr } ]
     -- let _ok = \_misc -> case _misc of { pattern -> ...; _ -> _nextClause }
     -- in concatMap _ok expression
 
-    | Generator           lhs.core = 
-        \continue ->
+    | Generator           lhs.ehcore = undefined
+{-        \continue ->
             let_ nextClauseId nil
                 (let_ 
                     okId 
@@ -252,40 +250,41 @@ SEM Qualifier [ | | core : { Core.Expr -> Core.Expr } ]
                         `app_` Core.Var okId 
                         `app_` @expression.core
                     )
-                )
+                )  -}
     --  range                    : Range
     --  pattern                  : Pattern
     --  expression               : Expression
     
 -- Not supported
 
-    | Empty               lhs.core = internalError "ToCoreExpr" "Qualifier" "empty qualifiers not supported"
+    | Empty               lhs.ehcore = internalError "ToEHCoreExpr" "Qualifier" "empty qualifiers not supported"
     --  range                    : Range
                   
-SEM Alternatives [ caseRange : Range | | core : { Core.Expr } ]
-    | Cons              lhs.core     = @hd.core @tl.core
-    | Nil               lhs.core     = patternMatchFail "case expression" @lhs.caseRange
+SEM Alternatives [ | | ehcore : { EHCore.CExpr } ]
+    | Cons              lhs.ehcore     = @hd.ehcore @tl.ehcore
+    | Nil               lhs.ehcore     = patternMatchFailEh "case expression" @lhs.caseRange
 
-SEM Alternative [ | | core : { Core.Expr -> Core.Expr } ]
-    | Alternative       lhs.core   = \nextCase  ->
+SEM Alternative [ | | ehcore : { EHCore.CExpr -> EHCore.CExpr } ]
+    | Alternative       lhs.ehcore   = undefined {- \nextCase  ->
                                         let thisCase =
-                                                patternToCore 
+                                                patternToEHCore 
                                                     (caseExprId, @pattern.self) 
-                                                    @righthandside.core
+                                                    @righthandside.ehcore
                                         in
-                                            let_ nextClauseId nextCase thisCase
+                                            let_ nextClauseId nextCase thisCase -}
     --  range                    : Range
     --  pattern                  : Pattern
     --  righthandside            : RightHandSide
 
-    | Empty             lhs.core   = id
+    | Empty             lhs.ehcore   = id
     --  range                    : Range
 
-ATTR GuardedExpressions [ | | core USE { : } { [] } : { [Core.Expr -> Core.Expr] } ]
+ATTR GuardedExpressions [ | | ehcore USE { : } { [] } : { [EHCore.CExpr -> EHCore.CExpr] } ]
 
-SEM GuardedExpression [ | | core : { Core.Expr -> Core.Expr } ]
-    | GuardedExpression lhs.core = 
-        \fail -> if_ @guard.core @expression.core fail
+SEM GuardedExpression [ | | ehcore : { EHCore.CExpr -> EHCore.CExpr } ]
+    | GuardedExpression lhs.ehcore = undefined
+{-
+        \fail -> if_ @guard.ehcore @expression.ehcore fail
     --  range                    : Range
     --  guard                    : Expression -- type: Boolean
     --  expression               : Expression
