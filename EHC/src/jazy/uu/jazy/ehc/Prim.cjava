@@ -122,6 +122,7 @@ public class Prim
      * Int: comparison
      */
     public static Object primEqInt( int v1, int v2 ) { return RTS.mkBool(v1 == v2) ; }
+    public static Object primNeInt( int v1, int v2 ) { return RTS.mkBool(v1 != v2) ; }
     public static Object primLtInt( int v1, int v2 ) { return RTS.mkBool(v1 < v2) ; }
     public static Object primGtInt( int v1, int v2 ) { return RTS.mkBool(v1 > v2) ; }
     public static Object primLeInt( int v1, int v2 ) { return RTS.mkBool(v1 <= v2) ; }
