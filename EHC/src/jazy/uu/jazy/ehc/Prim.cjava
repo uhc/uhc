@@ -237,8 +237,14 @@ public class Prim
     public static BigInteger primModInteger( BigInteger v1, BigInteger v2 ) {
     	return ( v2.signum() < 0 ? v1.mod(v2.negate()).add(v2) : v1.mod(v2) ) ;
     }
+    public static BigInteger primAndInteger( BigInteger v1, BigInteger v2 ) { return v1.and(v2) ; }
+    public static BigInteger primOrInteger( BigInteger v1, BigInteger v2 ) { return v1.or(v2) ; }
+    public static BigInteger primXorInteger( BigInteger v1, BigInteger v2 ) { return v1.xor(v2) ; }
     
     public static BigInteger primNegInteger( BigInteger v1 ) { return v1.negate() ; }
+    public static BigInteger primComplementInteger( BigInteger v1 ) { return v1.not() ; }
+    public static BigInteger primShiftLeftInteger( BigInteger v1, int n ) { return v1.shiftLeft(n) ; }
+    public static BigInteger primShiftRightInteger( BigInteger v1, int n ) { return v1.shiftRight(n) ; }
     
 %%]
     
