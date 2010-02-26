@@ -328,7 +328,7 @@ public class Prim
     		exp -= biasExpDouble + szmant ;
     	}
     	if ( sign > 0 ) { mant = -mant ; }
-    	System.out.println("primDecodeDouble " + v + "=" + mant + "^" + exp) ;
+    	//System.out.println("primDecodeDouble " + v + "=" + mant + "^" + exp) ;
     	return new Object[] {BigInteger.valueOf(mant), new Integer(exp)} ;
     }
     
@@ -344,7 +344,7 @@ public class Prim
     		exp -= biasExpFloat + szmant ;
     	}
     	if ( sign > 0 ) { mant = -mant ; }
-    	System.out.println("primDecodeFloat " + v + "=" + mant + "^" + exp) ;
+    	//System.out.println("primDecodeFloat " + v + "=" + mant + "^" + exp) ;
     	return new Object[] {BigInteger.valueOf(mant), new Integer(exp)} ;
     }
     
