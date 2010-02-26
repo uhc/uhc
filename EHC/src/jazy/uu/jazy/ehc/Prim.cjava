@@ -420,6 +420,7 @@ public class Prim
     public static float primDivideFloat( float v1, float v2 ) { return v1 / v2 ; }
     
     public static float primNegFloat( float v1 ) { return -v1 ; }
+    public static float primRecipFloat( float v1 ) { return 1f / v1 ; }
     
     // todo: NaN, IEEE, max exp, encode, decode, etc
 %%]
@@ -486,6 +487,7 @@ public class Prim
     public static double primDivideDouble( double v1, double v2 ) { return v1 / v2 ; }
     
     public static double primNegDouble( double v1 ) { return -v1 ; }
+    public static double primRecipDouble( double v1 ) { return 1d / v1 ; }
     
     // todo: NaN, IEEE, max exp, encode, decode, etc
 %%]
