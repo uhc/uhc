@@ -417,7 +417,7 @@ public class Prim
     public static float primAddFloat( float v1, float v2 ) { return v1 + v2 ; }
     public static float primSubFloat( float v1, float v2 ) { return v1 - v2 ; }
     public static float primMulFloat( float v1, float v2 ) { return v1 * v2 ; }
-    public static float primDivFloat( float v1, float v2 ) { return v1 / v2 ; }
+    public static float primDivideFloat( float v1, float v2 ) { return v1 / v2 ; }
     
     public static float primNegFloat( float v1 ) { return -v1 ; }
     
@@ -483,7 +483,7 @@ public class Prim
     public static double primAddDouble( double v1, double v2 ) { return v1 + v2 ; }
     public static double primSubDouble( double v1, double v2 ) { return v1 - v2 ; }
     public static double primMulDouble( double v1, double v2 ) { return v1 * v2 ; }
-    public static double primDivDouble( double v1, double v2 ) { return v1 / v2 ; }
+    public static double primDivideDouble( double v1, double v2 ) { return v1 / v2 ; }
     
     public static double primNegDouble( double v1 ) { return -v1 ; }
     
