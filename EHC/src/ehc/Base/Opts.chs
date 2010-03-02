@@ -91,7 +91,7 @@ data PkgOption
 %%% Transformation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%[(8 codegen) export(cmdLineTrfs)
+%%[(8888 codegen) export(cmdLineTrfs)
 data TrfOpt = TrfYes String | TrfNo String | TrfAllYes | TrfAllNo
 
 cmdLineTrfs :: AssocL String String
@@ -116,7 +116,7 @@ cmdLineTrfs
     ]
 %%]
 
-%%[(8 codegen) export(trfOptOverrides)
+%%[(8888 codegen) export(trfOptOverrides)
 trfOptOverrides :: [TrfOpt] -> String -> Maybe Bool
 trfOptOverrides opts trf
   =  ovr opts
@@ -202,8 +202,9 @@ data EHCOpts
       -- ,  ehcOptEmitCore       ::  Bool
       ,  ehcOptOptimise       ::  Optimise          -- optimisation level
       ,  ehcOptDumpCoreStages ::  Bool              -- dump intermediate Core transformation stages
-      ,  ehcOptTrf            ::  [TrfOpt]
+      -- ,  ehcOptTrf            ::  [TrfOpt]
       ,  ehcOptTarget         ::  Target            -- code generation target
+      ,  ehcOptTargetVariant  ::  TargetVariant     -- code generation target variant
       ,  ehcOptUseTyCore      ::  Maybe [TyCoreOpt] -- use TyCore instead of Core (temporary option until Core is obsolete)
 %%]]
 %%[[(8 codegen grin)
@@ -259,7 +260,7 @@ data EHCOpts
                               ::  Bool              -- show fitsIn derivation tree as well
 %%]]
 %%[[99
-      ,  ehcOptCheckVersion   ::  Bool				-- use out of date of compiler version when determining need for recompilation
+      ,  ehcOptHiValidityCheck::  Bool				-- when .hi and compiler are out of sync w.r.t. timestamp and checksum, recompile
       ,  ehcOptLibFileLocPath ::  FileLocPath
       ,  ehcOptPkgdirLocPath  ::  FileLocPath
       ,  ehcOptPkgDb          ::  PackageDatabase	-- package database to be used for searching packages
@@ -386,8 +387,9 @@ defaultEHCOpts
 %%[[(8 codegen)
       ,  ehcOptDumpCoreStages   =   False
       ,  ehcOptOptimise         =   OptimiseNormal
-      ,  ehcOptTrf              =   []
+      -- ,  ehcOptTrf              =   []
       ,  ehcOptTarget           =   defaultTarget
+      ,  ehcOptTargetVariant    =   defaultTargetVariant
       ,  ehcOptUseTyCore        =   Nothing
 %%]]
 %%[[(8 codegen grin)
@@ -448,7 +450,7 @@ defaultEHCOpts
       ,  ehcOptEmitDerivFitsIn  =   False
 %%]]
 %%[[99
-      ,  ehcOptCheckVersion     =   True
+      ,  ehcOptHiValidityCheck  =   True
       ,  ehcOptLibFileLocPath   =   []
       ,  ehcOptPkgdirLocPath    =   []
       ,  ehcOptPkgDb          	=	emptyPackageDatabase
@@ -491,7 +493,8 @@ ehcCmdLineOpts
 %%[[1
      ,  Option "t"  ["target"]           (OptArg oTarget "")                  "code generation not available"
 %%][(8 codegen)
-     ,  Option "t"  ["target"]           (ReqArg oTarget (showSupportedTargets' "|"))  ("generate code for target, default=" ++ show defaultTarget)
+     ,  Option "t"  ["target"]           (ReqArg oTarget (showSupportedTargets'  "|"))  ("generate code for target, default=" ++ show defaultTarget)
+     ,  Option ""   ["target-variant"]   (ReqArg oTargetVariant (showAllTargetVariants' "|"))  ("generate code for target variant, default=" ++ show defaultTargetVariant)
 %%]]
 %%[[1
      ,  Option "p"  ["pretty"]           (OptArg oPretty "hs|eh|ast|-")       "show pretty printed source or EH abstract syntax tree, default=eh, -=off, (downstream only)"
@@ -522,8 +525,8 @@ ehcCmdLineOpts
 %%]]
 %%[[(8 codegen)
      ,  Option ""   ["code"]             (OptArg oCode "hs|eh|exe[c]|lexe[c]|bexe[c]|-")  "write code to file, default=bexe (will be obsolete and/or changed, use --target)"
-     ,  Option ""   ["trf"]              (ReqArg oTrf ("([+|-][" ++ concat (intersperse "|" (assocLKeys cmdLineTrfs)) ++ "])*"))
-                                                                              "switch on/off core transformations"
+     -- ,  Option ""   ["trf"]              (ReqArg oTrf ("([+|-][" ++ concat (intersperse "|" (assocLKeys cmdLineTrfs)) ++ "])*"))
+     --                                                                          "switch on/off core transformations"
      ,  Option ""   ["dump-core-stages"] (boolArg optDumpCoreStages)          "dump intermediate Core transformation stages (no)"
 %%][100
 %%]]
@@ -560,11 +563,11 @@ ehcCmdLineOpts
 %%][100
 %%]]
 %%[[99
-     ,  Option ""   ["no-version-check"] (NoArg oNoVersionCheck)              "no check for compiler version when recompiling"
      ,  Option ""   ["numeric-version"]  (NoArg oNumVersion)                  "print show numeric version (then stop)"
      ,  Option "i"  ["import-path"]      (ReqArg oUsrFileLocPath "path")       "search path for user files, path separators=';', appended to previous"
      ,  Option "L"  ["lib-search-path"]  (ReqArg oLibFileLocPath "path")       "search path for library files, see also --import-path"
      ,  Option ""   ["no-prelude"]       (NoArg oNoPrelude)                   "do not assume presence of Prelude"
+     ,  Option ""   ["no-hi-check"] 	 (NoArg oNoHiCheck)                   "no check on .hi files not matching the compiler version"
      ,  Option ""   ["cpp"]              (NoArg oCPP)                         "preprocess source with CPP"
      ,  Option ""   ["limit-tysyn-expand"]
                                          (intArg oLimitTyBetaRed)             "type synonym expansion limit"
@@ -655,9 +658,10 @@ ehcCmdLineOpts
                                 _      -> o { ehcOptUseTyCore = Just [] }
 %%]]
 %%[[1
-         oTarget     _   o =  o
+         oTarget        _ o =  o
 %%][(8 codegen)
-         oTarget      s  o =  o { ehcOptTarget = Map.findWithDefault defaultTarget s supportedTargetMp }
+         oTarget        s o =  o { ehcOptTarget        = Map.findWithDefault defaultTarget        s supportedTargetMp }
+         oTargetVariant s o =  o { ehcOptTargetVariant = Map.findWithDefault defaultTargetVariant s allTargetVariantMp }
 %%]]
 %%[[1
          oTargets        o =  o { ehcOptImmQuit       = Just ImmediateQuitOption_Meta_Targets       }
@@ -716,7 +720,7 @@ ehcCmdLineOpts
 %%]]
                                 _            -> o
 
-%%[[(8 codegen)
+%%[[(8888 codegen)
          oTrf        s   o =  o { ehcOptTrf           = opt s   }
                            where  opt "" =  []
                                   opt o  =  let  (pm,o2) = span (\c -> c == '+' || c == '-') o
@@ -774,7 +778,7 @@ ehcCmdLineOpts
          oCompileOnly           o   = o { ehcOptDoLinking                   = False    }
 %%]]
 %%[[99
-         oNoVersionCheck        o   = o { ehcOptCheckVersion                = False    }
+         oNoHiCheck             o   = o { ehcOptHiValidityCheck             = False    }
          oNumVersion            o   = o { ehcOptImmQuit                     = Just ImmediateQuitOption_NumericVersion }
          oUsrFileLocPath      s o   = o { ehcOptImportFileLocPath           = ehcOptImportFileLocPath o ++ mkFileLocPath s }
          oLibFileLocPath      s o   = o { ehcOptLibFileLocPath              = ehcOptLibFileLocPath o ++ mkFileLocPath s }
@@ -914,6 +918,7 @@ data FIOBind = FIOBindYes | FIOBindNoBut TyVarIdS
 
 fioBindNoSet :: FIOBind -> TyVarIdS
 fioBindNoSet (FIOBindNoBut s) = s
+fioBindNoSet _                = Set.empty
 
 fioBindIsYes :: FIOBind -> Bool
 fioBindIsYes FIOBindYes = True

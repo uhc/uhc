@@ -46,7 +46,6 @@ ATTR AllNT [ | | trf: SELF     ]
 --
 ATTR AllNT [ | | self: SELF ]
 
-
 ATTR Variable [ multi : {Int} | | ]
 ATTR Statement Statements Alternative Alternatives [  | defMap : {Map.Map Variable Int} | ]
 ATTR Statement Statements Alternative Alternatives Variable Value Values [  | useMap : {Map.Map Variable Int} | ]
@@ -162,7 +161,5 @@ virtualizable _ _ _ = False
 notSame :: Variable -> Value -> Bool
 notSame v1 (Value_Var v2) = v1 /= v2
 notSame _ _ = True
-
-
 
 %%]

@@ -308,8 +308,11 @@ numericEnumFromThenTo n n' m = takeWhile p (numericEnumFromThen n n')
                                        | otherwise = (>= m + (n'-n)/2)
 
 iterate' :: (a -> a) -> a -> [a]        -- strict version of iterate
+#ifdef __UHC_TARGET_C__
 iterate' f x = x : (iterate' f $! f x)
-
+#else
+iterate' f x = x : (letstrict fx = f x in iterate' f fx)
+#endif
 
 --------------------------------------------------------------
 -- Numeric classes: Num, Real, Integral, 
@@ -1504,7 +1507,7 @@ concat           :: [[a]] -> [a]
 concat            = foldr (++) []
 
 length           :: [a] -> Int
-length            = foldl' (\n _ -> n + 1) 0
+length            = foldl' (\n _ -> n + (1::Int)) (0::Int)
 
 (!!)             :: [a] -> Int -> a
 xs     !! n | n<0 = error "Prelude.!!: negative index"
@@ -1518,7 +1521,11 @@ foldl f z (x:xs)  = foldl f (f z x) xs
 
 foldl'           :: (a -> b -> a) -> a -> [b] -> a
 foldl' f a []     = a
+#ifdef __UHC_TARGET_C__
 foldl' f a (x:xs) = (foldl' f $! f a x) xs
+#else
+foldl' f a (x:xs) = letstrict fax = f a x in foldl' f fax xs
+#endif
 
 foldl1           :: (a -> a -> a) -> [a] -> a
 foldl1 f (x:xs)   = foldl f x xs

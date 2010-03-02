@@ -9,7 +9,7 @@ EHCLIB_SYNC_ALL_PKG						:= $(EHC_PACKAGES_ASSUMED)
 EHCLIB_SYNC_ALL_PKG_base_ASIS			:= $(patsubst %,include/%.h,Typeable dirUtils consUtils)
 EHCLIB_SYNC_ALL_PKG_base_C				:= $(patsubst %,cbits/%.c,)
 EHCLIB_SYNC_ALL_PKG_base				:= $(patsubst %,%.hs,Foreign) \
-											$(patsubst %,Data/%.hs,Bool Eq Ord Function Ratio List String Monoid Complex Ix Dynamic) \
+											$(patsubst %,Data/%.hs,Bool Eq Ord Function Ratio List String Complex Ix Dynamic) \
 											$(patsubst %,Unsafe/%.hs,Coerce) \
 											$(patsubst %,Foreign/%.hs,C Marshal Marshal/Utils Marshal/Array C/String) \
 											$(patsubst %,System/%.hs,IO/Unsafe Console/GetOpt Posix/Types) \
@@ -113,10 +113,14 @@ EHCLIB_GHCSYNC_FROZEN_DRV_ARCH			:= $(EHCLIB_BLD_SYNC_PREFIX)$(EHCLIB_GHCSYNC_FR
 ###########################################################################################
 
 EHCLIB_DEBUG_OPTS						=
+#EHCLIB_DEBUG_OPTS						= --no-hi-check
+#EHCLIB_DEBUG_OPTS						= --target-variant=debug --dump-core-stages=1 --dump-grin-stages=1 --gen-trace=1 --gen-cmt=1
+#EHCLIB_DEBUG_OPTS						= -O0
 #EHCLIB_DEBUG_OPTS						= -v3
 #EHCLIB_DEBUG_OPTS						= -v4
 #EHCLIB_DEBUG_OPTS						= -v4 --debug-stopat-hi-error=1 
 #EHCLIB_DEBUG_OPTS						= --dump-core-stages=1 --dump-grin-stages=1 --gen-trace=1 --gen-cmt=1
+#EHCLIB_DEBUG_OPTS						= --dump-core-stages=1 --dump-grin-stages=1 --gen-trace=1 --gen-cmt=1 -O0
 #EHCLIB_DEBUG_OPTS						= --dump-core-stages=1 --dump-grin-stages=1 --gen-trace=1 --gen-cmt=1 --priv=1
 
 ehclib-variant-dflt: \
