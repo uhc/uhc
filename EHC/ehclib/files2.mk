@@ -114,12 +114,13 @@ EHCLIB_GHCSYNC_FROZEN_DRV_ARCH			:= $(EHCLIB_BLD_SYNC_PREFIX)$(EHCLIB_GHCSYNC_FR
 
 EHCLIB_DEBUG_OPTS						=
 #EHCLIB_DEBUG_OPTS						= --no-hi-check
+#EHCLIB_DEBUG_OPTS						= --dump-core-stages=1 --dump-grin-stages=1 --gen-trace=1 --gen-cmt=1
 #EHCLIB_DEBUG_OPTS						= --target-variant=debug --dump-core-stages=1 --dump-grin-stages=1 --gen-trace=1 --gen-cmt=1
 #EHCLIB_DEBUG_OPTS						= -O0
 #EHCLIB_DEBUG_OPTS						= -v3
 #EHCLIB_DEBUG_OPTS						= -v4
 #EHCLIB_DEBUG_OPTS						= -v4 --debug-stopat-hi-error=1 
-#EHCLIB_DEBUG_OPTS						= --dump-core-stages=1 --dump-grin-stages=1 --gen-trace=1 --gen-cmt=1
+#EHCLIB_DEBUG_OPTS						= -O0 --dump-core-stages=1 --dump-grin-stages=1 --gen-trace=1 --gen-cmt=1
 #EHCLIB_DEBUG_OPTS						= --dump-core-stages=1 --dump-grin-stages=1 --gen-trace=1 --gen-cmt=1 -O0
 #EHCLIB_DEBUG_OPTS						= --dump-core-stages=1 --dump-grin-stages=1 --gen-trace=1 --gen-cmt=1 --priv=1
 
@@ -147,7 +148,6 @@ ehclib-variant-dflt: \
 	          --pkg-hide-all \
 	          --target=$(EHC_VARIANT_TARGET) \
 	          --odir=$(EHCLIB_INSTALL_VARIANT_TARGET_PREFIX)$${pkg} \
-	          --pkg-build-libdir=$(EHCLIB_INSTALL_VARIANT_TARGET_PREFIX) \
 	          --pkg-build=$${pkg} \
 	          --import-path=$(call FUN_MK_PKG_INC_DIR,$(EHCLIB_INSTALL_VARIANT_TARGET_PREFIX)$${pkg}/) \
 	          $${pkgs} \
@@ -162,6 +162,7 @@ ehclib-variant-dflt: \
 
 #	     ,$(EHC_INSTALL_VARIANT_ASPECTS_EXEC) --cpp --target=$(EHC_VARIANT_TARGET) $(EHCLIB_HS_MAIN_DRV_HS) \
 #	      set -xv;\
+#	          --pkg-build-libdir=$(EHCLIB_INSTALL_VARIANT_TARGET_PREFIX) \
 
 ###########################################################################################
 # make all ehclibs target
@@ -273,9 +274,9 @@ $(EHCLIB_GHCSYNC_DOWNLOAD_DRV_ARCH): $(EHCLIB_MKF)
 $(addprefix $(EHCLIB_BLD_SYNC_SRC_PREFIX),$(EHCLIB_SYNC_ALL_PKG_SRC)) \
 			: $(EHCLIB_BLD_SYNC_SRC_PREFIX)% \
 			: $(EHCLIB_BLD_SYNC_PREFIX)$(EHCLIB_GHCSYNC_DOWNLOAD_NAME_BASE)/libraries/%
-	mkdir -p $$(@D)
-	cp $$< $$@
-	touch $$@
+	mkdir -p $(@D)
+	cp $< $@
+	touch $@
 
 # template for extraction for a package
 #define EHCLIB_PKG_TEMPLATE

@@ -211,8 +211,11 @@ data EHCOpts
       ,  ehcOptTimeCompile    ::  Bool
 
       ,  ehcOptGenCaseDefault ::  Bool
-      ,  ehcOptOwn            ::  Int
       ,  ehcOptGenCmt         ::  Bool
+      ,  ehcOptGenOwn         ::  Bool
+      ,  ehcOptGenRVS         ::  Bool
+      ,  ehcOptGenLink        ::  Bool
+      ,  ehcOptGenLocReg      ::  Bool
       ,  ehcOptGenDebug       ::  Bool              -- generate runtime debug info
       ,  ehcOptGenTrace       ::  Bool
       ,  ehcOptGenTrace2      ::  Bool
@@ -273,7 +276,7 @@ data EHCOpts
       -- ,  ehcOptHideAllPackages::  Bool              -- hide all implicitly used packages
       ,  ehcOptPackageSearchFilter	 ::  [PackageSearchFilter]	-- description of what to expose from package database
       ,  ehcOptOutputDir      ::  Maybe String      -- where to put output, instead of same dir as input file
-      ,  ehcOptOutputPkgLibDir::  Maybe String      -- where to put output the lib part of a package, instead of same dir as input file
+      -- ,  ehcOptOutputPkgLibDir::  Maybe String      -- where to put output the lib part of a package, instead of same dir as input file
       ,  ehcOptKeepIntermediateFiles
                               ::  Bool              -- keep intermediate files
       ,  ehcOptPkg            ::  Maybe PkgOption	-- package building (etc) option
@@ -394,9 +397,11 @@ defaultEHCOpts
 %%]]
 %%[[(8 codegen grin)
       ,  ehcOptTimeCompile      =   False
-
+      ,  ehcOptGenOwn           =   True
+      ,  ehcOptGenRVS           =   False
+      ,  ehcOptGenLink          =   False
+      ,  ehcOptGenLocReg        =   False
       ,  ehcOptGenCaseDefault   =   False
-      ,  ehcOptOwn              =   3
       ,  ehcOptGenDebug         =   True
       ,  ehcOptGenTrace         =   False
       ,  ehcOptGenTrace2        =   False
@@ -463,7 +468,7 @@ defaultEHCOpts
       ,  ehcOptPackageSearchFilter
       							=	pkgSearchFilter PackageSearchFilter_ExposePkg Cfg.ehcAssumedPackages
       ,  ehcOptOutputDir        =   Nothing
-      ,  ehcOptOutputPkgLibDir  =   Nothing
+      -- ,  ehcOptOutputPkgLibDir  =   Nothing
       ,  ehcOptKeepIntermediateFiles
                                 =   False
       ,  ehcOptPkg              =   Nothing
@@ -533,7 +538,10 @@ ehcCmdLineOpts
 %%[[(8 codegen grin)
      ,  Option ""   ["time-compilation"] (NoArg oTimeCompile)                 "show grin compiler CPU usage for each compilation phase (only with -v2)"
      ,  Option ""   ["gen-casedefault"]  (boolArg optSetGenCaseDefault)       "trap wrong casedistinction in C (no)"
-     ,  Option "g"  ["gen-own"]          (OptArg  oOwn "0|1|2|3|4")           "generate own 1=parameters/tailjumps, 2=locals, 3=calls, 4=stack (3)"
+     ,  Option "g"  ["gen-own"]          (boolArg optSetGenOwn)               "use own stack, thus enabling tailcalls (yes)"
+     ,  Option ""   ["gen-rvs"]          (boolArg optSetGenRVS)               "put return values on stack (no)"
+     ,  Option ""   ["gen-link"]         (boolArg optSetGenLink)              "generate code for static link (no)"
+     ,  Option ""   ["gen-locreg"]       (boolArg optSetGenLocReg)            "allocate locals in registers that are saved before calls (no)"
      ,  Option ""   ["gen-cmt"]          (boolArg optSetGenCmt)               "include comment about code in generated code"
      ,  Option ""   ["gen-debug"]        (boolArg optSetGenDebug)             "include debug info in generated code (yes)"
      ,  Option ""   ["gen-trace"]        (boolArg optSetGenTrace)             "trace functioncalls in C (no)"
@@ -595,7 +603,7 @@ ehcCmdLineOpts
      ,  Option ""   ["meta-pkgdir-system"]  (NoArg oMetaPkgdirSys) 				 "meta: print system package dir (then stop)"
      ,  Option ""   ["meta-pkgdir-user"]    (NoArg oMetaPkgdirUser) 			 "meta: print user package dir (then stop)"
      ,  Option ""   ["pkg-build"]        	(ReqArg oPkgBuild "package")         "pkg: build package from generated files. Implies --compile-only"
-     ,  Option ""   ["pkg-build-libdir"] 	(ReqArg oOutputPkgLibDir "dir")      "pkg: where to put the lib part of a package"
+     -- ,  Option ""   ["pkg-build-libdir"] 	(ReqArg oOutputPkgLibDir "dir")      "pkg: where to put the lib part of a package"
      ,  Option ""   ["pkg-expose"]       	(ReqArg oExposePackage "package")    "expose/use package"
      ,  Option ""   ["pkg-hide"]         	(ReqArg oHidePackage   "package")    "hide package"
      ,  Option ""   ["pkg-hide-all"]     	(NoArg oHideAllPackages)             "hide all (implicitly) assumed/used packages"
@@ -734,15 +742,6 @@ ehcCmdLineOpts
                                                    _          -> []
 %%]]
 %%[[(8 codegen grin)
-         oOwn        ms  o =  case ms of
-                                Just "0"    -> o { ehcOptOwn     = 0       }
-                                Just "1"    -> o { ehcOptOwn     = 1       }
-                                Just "2"    -> o { ehcOptOwn     = 2       }
-                                Just "3"    -> o { ehcOptOwn     = 3       }
-                                Just "4"    -> o { ehcOptOwn     = 4       }
-                                Just "5"    -> o { ehcOptOwn     = 5       }
-                                Nothing     -> o { ehcOptOwn     = 3       }
-                                _           -> o { ehcOptOwn     = 3       }
          oRTSInfo    s   o =  o { ehcOptGenRTSInfo     = read s       }
 %%]]
          oVerbose    ms  o =  case ms of
@@ -802,7 +801,7 @@ ehcCmdLineOpts
          oOutputDir           s o   = o { ehcOptOutputDir                   = Just s
                                         , ehcOptDoLinking                   = False
                                         }
-         oOutputPkgLibDir     s o   = o { ehcOptOutputPkgLibDir             = Just s }
+         -- oOutputPkgLibDir     s o   = o { ehcOptOutputPkgLibDir             = Just s }
          oKeepIntermediateFiles o   = o { ehcOptKeepIntermediateFiles       = True }
          oPkgBuild            s o   = o { ehcOptPkg                         = Just (PkgOption_Build s)
                                         , ehcOptDoLinking                   = False
@@ -870,6 +869,10 @@ optSetGenTrace2      o b = o { ehcOptGenTrace2      = b }
 optSetGenRTSInfo     o b = o { ehcOptGenRTSInfo     = b }
 optSetGenCaseDefault o b = o { ehcOptGenCaseDefault = b }
 optSetGenCmt         o b = o { ehcOptGenCmt         = b }
+optSetGenOwn         o b = o { ehcOptGenOwn         = b }
+optSetGenRVS         o b = o { ehcOptGenRVS         = b }
+optSetGenLink        o b = o { ehcOptGenLink        = b }
+optSetGenLocReg      o b = o { ehcOptGenLocReg      = b }
 optSetGenDebug       o b = o { ehcOptGenDebug       = b }
 optDumpGrinStages    o b = o { ehcOptDumpGrinStages = b {-, ehcOptEmitGrin = b -} }
 optEarlyModMerge     o b = o { ehcOptEarlyModMerge  = b }
