@@ -60,7 +60,12 @@ public class Prim
     public static int primIntegerToInt( BigInteger v1 ) { return v1.intValue() ; }
     public static float primIntegerToFloat( BigInteger v1 ) { return v1.floatValue() ; }
     public static double primIntegerToDouble( BigInteger v1 ) { return v1.doubleValue() ; }
-    
+
+	public static int primIntegerToInt32( BigInteger v1 ) { return v1.intValue() ; }
+	public static BigInteger primInt32ToInteger( int v1 ) { return BigInteger.valueOf(v1) ; }
+	public static int primIntToInt32( int v1 ) { return v1 ; }
+	public static int primInt32ToInt( int v1 ) { return v1 ; }
+
     public static BigInteger primCStringToInteger( String v1 ) { return new BigInteger(v1) ; }
     
     public static double primRationalToDouble( Object v1 ) {
