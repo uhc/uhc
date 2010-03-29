@@ -44,7 +44,13 @@ public class Prim
     public static float primIntToFloat( int v1 ) { return (float)v1 ; }
     public static double primIntToDouble( int v1 ) { return (double)v1 ; }
     public static BigInteger primIntToInteger( int v1 ) { return BigInteger.valueOf(v1) ; }
-    
+
+	// TODO: is that correct?
+    public static int primIntegerToWord32( BigInteger v1 ) { return v1.intValue() ; }
+    public static BigInteger primWord32ToInteger( int v1 ) { return BigInteger.valueOf(v1) ; }
+    public static long primIntegerToWord64( BigInteger v1 ) { return v1.intValue() ; }
+    public static BigInteger primWord64ToInteger( long v1 ) { return BigInteger.valueOf(v1) ; }
+
     public static float primDoubleToFloat( double v1 ) { return (float)v1 ; }
     public static BigInteger primDoubleToInteger( double v1 ) { return BigInteger.valueOf((long)v1) ; }
     
@@ -99,9 +105,11 @@ public class Prim
 		}    	
     	return mod ;
     }
-    
+
     public static int primNegInt( int v1 ) { return -v1 ; }
-    
+    public static int primComplementInt( int v1 ) { return ~ v1 ; }
+    public static int primShiftLeftInt( int v1, int n ) { return v1 << n ; }
+    public static int primShiftRightInt( int v1, int n ) { return v1 >> n ; }
 %%]
     
 %%[(8 jazy)
@@ -143,6 +151,34 @@ public class Prim
     public static int primMinInt() { return Integer.MIN_VALUE ; }
 %%]
     
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Word, Word8, etc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%[(97 jazy)
+	// arithmetic
+	public static int primAndWord( int v1, int v2 ) { return v1 & v2; }
+	public static int primOrWord( int v1, int v2 ) { return v1 | v2; }
+	public static int primXorWord( int v1, int v2 ) { return v1 ^ v2; }
+
+	// min/max value
+    public static int primMaxWord8() { return 0 ; }
+    public static int primMinWord8() { return 255 ; }
+    public static int primMaxWord16() { return 0 ; }
+    public static int primMinWord16() { return 65535 ; }
+    public static int primMaxWord32() { return 0 ; }
+    public static int primMinWord32() {
+		// This should return 4294967295, but that's too large for an int value -- Java's
+		// int is also 32 bit, but signed.
+		return -1 ;
+	}
+    public static long primMaxWord64() { return 0 ; }
+    public static long primMinWord64() {
+		// Same problem as above: this one should really return 18446744073709551615.
+		return -1 ;
+	}
+%%]
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Long
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
