@@ -32,7 +32,7 @@
 
 %%[1
 tokConcat :: Token -> Token -> Token
-tokConcat t1 t2 = Reserved (genTokVal t1 ++ genTokVal t2) (position t1)
+tokConcat t1 t2 = Reserved (tokenVal t1 ++ tokenVal t2) (position t1)
 
 tokEmpty :: Token
 tokEmpty = Reserved "" noPos
@@ -103,27 +103,6 @@ pImpls = pPacked pOIMPL pCIMPL
 pApp            ::   SemApp ep => HSParser ep -> HSParser ep
 pApp p          =    mkApp <$> pList1 p
 %%]
-
-%%[1
-%%]
-block items
-  =    pOCURLY   *>  items <* pCCURLY
-  <|>  pVOCURLY  *>  items <* close
-
-close :: HSParser Token
-close = pVCCURLY
-
-close :: HParser () 
-close = pWrap f g (pVCCURLY)
-  where g state steps1 k = (state,ar,k)
-          where ar = if not (hasSuccess steps1) 
-                       then case unP popContext state of
-                             POk state' _   -> let steps2 = k state'
-                                               in  if  hasSuccess steps2 then steps2 else steps1                      
-                             _              -> steps1  
-                       else steps1                             
-        f acc state steps k = let (stl,ar,str2rr) = g state (val snd steps)  k
-                              in (stl ,val (acc (return ())) ar , str2rr )
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Pragma
@@ -540,12 +519,14 @@ pDeclarationData
 %%[[95
             <*> (pDERIVING *> ((:[]) <$> pDeriving <|> pParens (pList1Sep pCOMMA pDeriving)) <|> pSucceed [])
 %%]]
+        -- TBD, for now: ignore quantifiers
+        pDCon, pNCon :: HSParser Constructor
 %%[[5
-        pDCon = pConstructor
+        pDCon = pList pTypeQuantPrefix *> pConstructor
 %%][9
-        pDCon = pContextedConstructor
+        pDCon = pList pTypeQuantPrefix *> pContextedConstructor
 %%]]
-        pNCon = pConstructor
+        pNCon = pList pTypeQuantPrefix *> pConstructor
 %%]
 
 %%[95
@@ -794,12 +775,12 @@ pType
 %%[[9
   <|> (\c -> Type_Qualified emptyRange [c]) <$> pContextItemImpl <* pRARROW <*> pType
 %%]]
-  <|> pTypePrefix <*> pType
+  <|> pTypeQuantPrefix <*> pType
 %%]
 
-%%[4.pTypePrefix
-pTypePrefix :: HSParser (Type -> Type)
-pTypePrefix
+%%[4.pTypeQuantPrefix
+pTypeQuantPrefix :: HSParser (Type -> Type)
+pTypeQuantPrefix
   =  ((Type_Forall . mkRange1) <$> pFORALL <|> (Type_Exists . mkRange1) <$> pEXISTS)
      <*> (tokMkQNames <$> pTyVarBinds) <* pDOT
 %%]
@@ -1712,7 +1693,12 @@ commas' :: HSParser [Token]
 commas' = pList1 pCOMMA
 
 commas :: HSParser Token
-commas =  (genTokMap (\s -> strProd (length s + 1)) . foldr tokConcat tokEmpty) <$> commas'
+commas =  (map (\s -> strProd (length s + 1)) . foldr tokConcat tokEmpty) <$> commas'
+%%[[1
+  where map = genTokMap
+%%][5
+  where map = tokenMap
+%%]]
 %%]
 
 The separator used for after conditional+then expressions in an if-then-else in a do.

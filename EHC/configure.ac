@@ -31,6 +31,7 @@ AC_SUBST(EH_VERSION_MINORMINOR)
 AC_SUBST(EH_VERSION_STABILITY)
 AC_SUBST(EH_VERSION_SHORT,$EH_VERSION_MAJOR.$EH_VERSION_MINOR)
 AC_SUBST(EH_VERSION_FULL,$EH_VERSION_MAJOR.$EH_VERSION_MINOR.$EH_VERSION_MINORMINOR)
+AC_SUBST(EH_VERSION_ASNUMBER,$EH_VERSION_MAJOR$EH_VERSION_MINOR$EH_VERSION_MINORMINOR)
 
 dnl macro for missing program
 AC_DEFUN(MISSING_FOR_EH,
@@ -308,8 +309,12 @@ esac
 AC_SUBST(GHC_CMD1,$ghcCmd1)
 
 
-### now we know we have ghc, check for some libraries using ghc-pkg
+### assuming we have ghc, check for some of the additional tools
 AC_PATH_PROG(ghcPkgCmd,ghc-pkg)
+AC_PATH_PROG(hsc2hsCmd,hsc2hs)
+AC_SUBST(HSC2HS_CMD,$hsc2hsCmd)
+
+### now we know we have ghc, check for some libraries using ghc-pkg
 ghcLibUulibExists=no
 ghcLibFglExists=no
 ghcLibNetwork=no

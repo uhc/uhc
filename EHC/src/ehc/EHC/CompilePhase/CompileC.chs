@@ -31,10 +31,14 @@ C + CPP compilation
 %%[(8 codegen)
 gccDefs :: EHCOpts -> [String] -> [String]
 gccDefs opts builds
-  = map (\d -> "-D__UHC" ++ d ++ "__")
-    $  [ "", "_TARGET_" ++ (map toUpper $ show $ ehcOptTarget opts) ]
-    ++ map ("_BUILDS_" ++) builds
-    ++ [ "_" ++ map (\c -> case c of {'.' -> '_'; c -> c}) (Cfg.verFull Cfg.version) ]
+  = map (\(d,mbval) -> "-D__UHC" ++ d ++ "__" ++ maybe "" ("=" ++) mbval)
+      $  [ (""                                                    , Just (Cfg.verAsNumber Cfg.version))
+         , ("_TARGET_" ++ (map toUpper $ show $ ehcOptTarget opts), Nothing                           )
+         ]
+      ++ map (\x -> ("_BUILDS_" ++ x, Nothing))
+             builds
+      ++ map (\x -> (x,Nothing))
+             [ "_" ++ map (\c -> case c of {'.' -> '_'; c -> c}) (Cfg.verFull Cfg.version) ]
 %%[[(99 codegen grin)
     --  ++ (if ehcOptFullProgAnalysis opts then ["_FULL_PROGRAM_ANALYSIS"] else [])
 %%]]
@@ -59,7 +63,14 @@ cpCompileWithGCC how othModNmL modNm
                             EHCUKind_C -> fp
 %%]]
                             _          -> mkOutputFPath opts modNm fp "c"
+%%[[8
                  fpO m f= mkOutputFPath opts m f "o"
+%%][99
+                 fpO m f= case ehcOptPkg opts of
+                            Just _ -> mkOutputFPath opts (hsnMapQualified (const base) m) (fpathSetBase base f) "o"
+                                   where base = hsnShow "_" "_" m
+                            _      -> mkOutputFPath opts m f "o"
+%%]]
                  fpExec = maybe (mkOutputFPath opts modNm fp "") (\s -> mkOutputFPath opts modNm fp s) Cfg.mbSuffixExec
                  variant= Cfg.installVariant opts
                  (fpTarg,targOpt,linkOpts,linkLibOpt,dotOFilesOpt,genOFiles)
@@ -87,7 +98,7 @@ cpCompileWithGCC how othModNmL modNm
 %%[[99
                                     mkl2 how l = Cfg.mkCLibFilename (Cfg.mkInstallFilePrefix opts how variant (showPkgKey l) ++ "/" ++
                                                                        mkInternalPkgFileBase l (Cfg.installVariant opts)
-                                                                         (ehcOptTarget opts) (ehcOptTargetVariant opts) ++ "/")
+                                                                         (ehcOptTarget opts) (ehcOptTargetFlavor opts) ++ "/")
                                                                     (showPkgKey l)
 %%]]
                             FinalCompile_Module
