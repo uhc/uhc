@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -XNoImplicitPrelude -#include "HsBase.h" #-}
 -----------------------------------------------------------------------------
 -- |
@@ -134,6 +135,7 @@ import Hugs.Prelude             ( Handle, IOError, ioError )
 import System.IO.Unsafe         ( unsafePerformIO )
 #elif __UHC__
 import UHC.IOBase
+import UHC.Base   -- [###] Added
 #else
 import System.IO                ( Handle )
 import System.IO.Error          ( IOError, ioError )
@@ -523,7 +525,13 @@ errnoToIOError  :: String       -- ^ the location where the error occurred
                 -> IOError
 errnoToIOError loc errno maybeHdl maybeName = unsafePerformIO $ do
     str <- strerror errno >>= peekCString
-#if __GLASGOW_HASKELL__
+{-
+[###] Added definition for __UHC__. This corrects the function because its users
+expect that the error will have the coressponding type. In the old implementation
+it always retuned a USER type error. This cause problem when dealing with directory
+creation which tests if the current directory exits.
+-}
+#if defined(__GLASGOW_HASKELL__) || defined(__UHC__)
     return (IOError maybeHdl errType loc str maybeName)
     where
     errType
@@ -541,13 +549,13 @@ errnoToIOError loc errno maybeHdl maybeName = unsafePerformIO $ do
         | errno == eBADRPC         = OtherError
         | errno == eBUSY           = ResourceBusy
         | errno == eCHILD          = NoSuchThing
-        | errno == eCOMM           = ResourceVanished
+        | errno == eCOMM           = OtherError --ResourceVanished
         | errno == eCONNABORTED    = OtherError
         | errno == eCONNREFUSED    = NoSuchThing
-        | errno == eCONNRESET      = ResourceVanished
+        | errno == eCONNRESET      = OtherError --ResourceVanished
         | errno == eDEADLK         = ResourceBusy
         | errno == eDESTADDRREQ    = InvalidArgument
-        | errno == eDIRTY          = UnsatisfiedConstraints
+        | errno == eDIRTY          = OtherError --UnsatisfiedConstraints
         | errno == eDOM            = InvalidArgument
         | errno == eDQUOT          = PermissionDenied
         | errno == eEXIST          = AlreadyExists
@@ -556,12 +564,12 @@ errnoToIOError loc errno maybeHdl maybeName = unsafePerformIO $ do
         | errno == eFTYPE          = InappropriateType
         | errno == eHOSTDOWN       = NoSuchThing
         | errno == eHOSTUNREACH    = NoSuchThing
-        | errno == eIDRM           = ResourceVanished
+        | errno == eIDRM           = OtherError --ResourceVanished
         | errno == eILSEQ          = InvalidArgument
         | errno == eINPROGRESS     = AlreadyExists
-        | errno == eINTR           = Interrupted
+        | errno == eINTR           = OtherError --Interrupted
         | errno == eINVAL          = InvalidArgument
-        | errno == eIO             = HardwareFault
+        | errno == eIO             = OtherError --HardwareFault
         | errno == eISCONN         = AlreadyExists
         | errno == eISDIR          = InappropriateType
         | errno == eLOOP           = InvalidArgument
@@ -570,8 +578,8 @@ errnoToIOError loc errno maybeHdl maybeName = unsafePerformIO $ do
         | errno == eMSGSIZE        = ResourceExhausted
         | errno == eMULTIHOP       = UnsupportedOperation
         | errno == eNAMETOOLONG    = InvalidArgument
-        | errno == eNETDOWN        = ResourceVanished
-        | errno == eNETRESET       = ResourceVanished
+        | errno == eNETDOWN        = OtherError --ResourceVanished
+        | errno == eNETRESET       = OtherError --ResourceVanished
         | errno == eNETUNREACH     = NoSuchThing
         | errno == eNFILE          = ResourceExhausted
         | errno == eNOBUFS         = ResourceExhausted
@@ -580,7 +588,7 @@ errnoToIOError loc errno maybeHdl maybeName = unsafePerformIO $ do
         | errno == eNOENT          = NoSuchThing
         | errno == eNOEXEC         = InvalidArgument
         | errno == eNOLCK          = ResourceExhausted
-        | errno == eNOLINK         = ResourceVanished
+        | errno == eNOLINK         = OtherError --ResourceVanished
         | errno == eNOMEM          = ResourceExhausted
         | errno == eNOMSG          = NoSuchThing
         | errno == eNONET          = NoSuchThing
@@ -592,35 +600,35 @@ errnoToIOError loc errno maybeHdl maybeName = unsafePerformIO $ do
         | errno == eNOTBLK         = InvalidArgument
         | errno == eNOTCONN        = InvalidArgument
         | errno == eNOTDIR         = InappropriateType
-        | errno == eNOTEMPTY       = UnsatisfiedConstraints
+        | errno == eNOTEMPTY       = OtherError --UnsatisfiedConstraints
         | errno == eNOTSOCK        = InvalidArgument
         | errno == eNOTTY          = IllegalOperation
         | errno == eNXIO           = NoSuchThing
         | errno == eOPNOTSUPP      = UnsupportedOperation
-        | errno == ePERM           = PermissionDenied
+        | errno == ePERM           = OtherError --PermissionDenied
         | errno == ePFNOSUPPORT    = UnsupportedOperation
-        | errno == ePIPE           = ResourceVanished
-        | errno == ePROCLIM        = PermissionDenied
+        | errno == ePIPE           = OtherError --ResourceVanished
+        | errno == ePROCLIM        = OtherError --PermissionDenied
         | errno == ePROCUNAVAIL    = UnsupportedOperation
-        | errno == ePROGMISMATCH   = ProtocolError
+        | errno == ePROGMISMATCH   = OtherError --ProtocolError
         | errno == ePROGUNAVAIL    = UnsupportedOperation
-        | errno == ePROTO          = ProtocolError
-        | errno == ePROTONOSUPPORT = ProtocolError
-        | errno == ePROTOTYPE      = ProtocolError
+        | errno == ePROTO          = OtherError --ProtocolError
+        | errno == ePROTONOSUPPORT = OtherError --ProtocolError
+        | errno == ePROTOTYPE      = OtherError --ProtocolError
         | errno == eRANGE          = UnsupportedOperation
-        | errno == eREMCHG         = ResourceVanished
+        | errno == eREMCHG         = OtherError --ResourceVanished
         | errno == eREMOTE         = IllegalOperation
         | errno == eROFS           = PermissionDenied
-        | errno == eRPCMISMATCH    = ProtocolError
+        | errno == eRPCMISMATCH    = OtherError --ProtocolError
         | errno == eRREMOTE        = IllegalOperation
         | errno == eSHUTDOWN       = IllegalOperation
         | errno == eSOCKTNOSUPPORT = UnsupportedOperation
         | errno == eSPIPE          = UnsupportedOperation
         | errno == eSRCH           = NoSuchThing
-        | errno == eSRMNT          = UnsatisfiedConstraints
-        | errno == eSTALE          = ResourceVanished
-        | errno == eTIME           = TimeExpired
-        | errno == eTIMEDOUT       = TimeExpired
+        | errno == eSRMNT          = OtherError --UnsatisfiedConstraints
+        | errno == eSTALE          = OtherError --ResourceVanished
+        | errno == eTIME           = OtherError --TimeExpired
+        | errno == eTIMEDOUT       = OtherError --TimeExpired
         | errno == eTOOMANYREFS    = ResourceExhausted
         | errno == eTXTBSY         = ResourceBusy
         | errno == eUSERS          = ResourceExhausted

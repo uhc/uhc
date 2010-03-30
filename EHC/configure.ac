@@ -12,8 +12,7 @@ AC_PROG_MAKE_SET
 # Checks for host/target
 AC_CANONICAL_HOST
 dnl ** canonicalize platform names
-HostPlatform=`/bin/sh $srcdir/config.sub $host` || exit 1
-
+HostPlatform=`/bin/sh $srcdir/config.sub $hostuuuuu
 ### Version info, extract from file VERSION
 # big change
 EH_VERSION_MAJOR=`awk -F . '{print $1}' VERSION`
@@ -1059,8 +1058,8 @@ AC_SUBST(EXIT_IF_ABSENT_LIB_OR_TOOL, $exitIfAbsentLibOrTool)
 AC_CONFIG_FILES([mk/config.mk mk/shared.mk])
 AC_CONFIG_FILES([test/benchmark/runbenchmark.pl])
 AC_CONFIG_FILES([src/ehc/Config.chs src/helium/Utils/OSSpecific.hs])
-# AC_CONFIG_FILES([bin/llvm-compilerdriver], [chmod +x bin/llvm-compilerdriver])
-AC_CONFIG_HEADERS([src/ehc/ConfigDefines.chs src/rts/config.ch src/rts/mm/config.ch ehclib/base/include/MachDeps.h ehclib/base/include/HsBaseConfig.h])
+# AC_CONFIG_FILES([bin/llvm-compilerdriver], [chmod +x bin/llvm-compilerdriver]
+AC_CONFIG_HEADERS([src/ehc/ConfigDefines.chs src/rts/config.ch src/rts/mm/config.ch ehclib/base/include/MachDeps.h ehclib/base/include/HsBaseConfig.h, ehclib/oldtime/include/HsTimeConfig.h, ehclib/directory/include/HsDirectoryConfig.h, ehclib/unix/include/HsUnixConfig.h])
 AC_OUTPUT
 
 echo

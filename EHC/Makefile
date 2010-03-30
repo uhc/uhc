@@ -12,8 +12,8 @@ TOP_PREFIX				:=
 # First (default) target just explains what can be done
 ###########################################################################################
 
-default: uhc
-
+#default: uhc
+default: 99/ehclib
 help: explanation
 
 ###########################################################################################

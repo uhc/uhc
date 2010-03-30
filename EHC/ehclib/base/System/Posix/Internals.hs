@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -XNoImplicitPrelude #-}
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
 {-# OPTIONS_HADDOCK hide #-}
@@ -49,6 +50,8 @@ import Hugs.Prelude (IOException(..), IOErrorType(..))
 import Hugs.IO (IOMode(..))
 #elif __UHC__
 import UHC.IOBase
+import UHC.Real -- [###] added
+import UHC.Base
 #else
 import System.IO
 #endif
@@ -181,7 +184,6 @@ fdIsTTY :: FD -> IO Bool
 fdIsTTY fd = c_isatty fd >>= return.toBool
 
 #if defined(HTYPE_TCFLAG_T)
-
 setEcho :: FD -> Bool -> IO ()
 setEcho fd on = do
   tcSetAttr fd $ \ p_tios -> do
@@ -257,7 +259,6 @@ foreign import ccall unsafe "HsBase.h __hscore_set_saved_termios"
 #endif
 
 #else
-
 -- 'raw' mode for Win32 means turn off 'line input' (=> buffering and
 -- character translation for the console.) The Win32 API for doing
 -- this is GetConsoleMode(), which also requires echoing to be disabled

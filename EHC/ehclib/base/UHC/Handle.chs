@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude #-} -- [###] Added
 %%[99
 -----------------------------------------------------------------------------
 -- |
@@ -54,8 +55,8 @@ module UHC.Handle (
 
   stdin, stdout, stderr,
   IOMode(..), openFile, openBinaryFile, fdToHandle_stat, fdToHandle, fdToHandle',
-  hFileSize, hSetFileSize, hIsEOF, isEOF, hLookAhead, hLookAhead', hSetBuffering, {- hSetBinaryMode, -}
-  hFlush, {- hDuplicate, hDuplicateTo, -}
+  hFileSize, hSetFileSize, hIsEOF, isEOF, hLookAhead, hLookAhead', hSetBuffering,  hSetBinaryMode, 
+  hFlush,  hDuplicate, hDuplicateTo, 
 
   hClose, hClose_help,
 
@@ -84,7 +85,7 @@ import System.IO.Error
 import System.Posix.Internals
 import System.Posix.Types
 
-import Debug.Trace
+import Debug.Trace --[DEBUG]
 
 #ifdef __UHC__
 -- Low level functions should get/return a CSsize, but the original code does not do so, so mimic it here:
@@ -1003,7 +1004,7 @@ openFile' filepath mode binary =
     -- for writing, so I think we're ok with a single open() here...
     fd <- throwErrnoIfMinus1Retry "openFile"
                 (c_open f (fromIntegral oflags) 0o666)
-
+    
     stat@(fd_type,_,_) <- fdStat fd
 
     h <- fdToHandle_stat fd (Just stat) False filepath mode binary
@@ -1721,7 +1722,7 @@ hIsSeekable handle =
                                          && (haIsBin handle_  || tEXT_MODE_SEEK_ALLOWED))
 %%]
 
-%%[99
+%%[99 
 -- -----------------------------------------------------------------------------
 -- Changing echo status (Non-standard GHC extensions)
 
@@ -1761,7 +1762,7 @@ hIsTerminalDevice handle = do
        _            -> fdIsTTY (haFD handle_))
 %%]
 
-%%[9999
+%%[99
 -- -----------------------------------------------------------------------------
 -- hSetBinaryMode
 
@@ -1774,12 +1775,20 @@ hSetBinaryMode handle bin =
     do throwErrnoIfMinus1_ "hSetBinaryMode"
           (setmode (haFD handle_) bin)
        return handle_{haIsBin=bin}
-  
+
+#ifdef __UHC__
+
+setmode :: CInt -> Bool -> IO CInt
+setmode fd b = return 0
+
+#else  
+
 foreign import ccall unsafe "__hscore_setmode"
   setmode :: CInt -> Bool -> IO CInt
+#endif
 %%]
 
-%%[9999
+%%[99
 -- -----------------------------------------------------------------------------
 -- Duplicating a Handle
 
@@ -1833,7 +1842,7 @@ dupHandle_ other_side h_ new_fd = do
   return (h_, new_handle_)
 %%]
 
-%%[9999
+%%[99
 -- -----------------------------------------------------------------------------
 -- Replacing a Handle
 

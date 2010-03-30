@@ -69,7 +69,7 @@ test-expect test-regress: test-lists
 	nerrors=0; \
 	nerrorsPlatformDpd=0; \
 	nwarnings=0; \
-	ehcOpts="--target=$(EHC_VARIANT_TARGET)" ; \
+	ehcOpts="--target=$(EHC_VARIANT_TARGET) -v1" ; \
     case $(EHC_VARIANT_TARGET) in \
       C) \
         texeInvoke="" ; \
@@ -84,6 +84,7 @@ test-expect test-regress: test-lists
         texeSuffix=".jar" ; \
         ;; \
     esac ; \
+  echo $(echOpts) ; \
 	cd $(TEST_REGRESS_SRC_PREFIX) ; \
 	for v in $(TEST_VARIANTS) ; \
 	do \

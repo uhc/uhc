@@ -17734,6 +17734,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 $ac_includes_default
+#include <termios.h>
 typedef tcflag_t ac__type_new_;
 int
 main ()
@@ -17831,6 +17832,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 $ac_includes_default
+#include <termios.h>
    typedef tcflag_t ac__type_sizeof_;
 int
 main ()
@@ -17885,6 +17887,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 $ac_includes_default
+#include <termios.h>
    typedef tcflag_t ac__type_sizeof_;
 int
 main ()
@@ -17922,6 +17925,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 $ac_includes_default
+#include <termios.h>
    typedef tcflag_t ac__type_sizeof_;
 int
 main ()
@@ -17986,6 +17990,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 $ac_includes_default
+#include <termios.h>
    typedef tcflag_t ac__type_sizeof_;
 int
 main ()
@@ -18044,6 +18049,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 $ac_includes_default
+#include <termios.h>
    typedef tcflag_t ac__type_sizeof_;
 static long int longval () { return (long int) (sizeof (ac__type_sizeof_)); }
 static unsigned long int ulongval () { return (long int) (sizeof (ac__type_sizeof_)); }
@@ -29268,7 +29274,7 @@ ac_config_files="$ac_config_files test/benchmark/runbenchmark.pl"
 ac_config_files="$ac_config_files src/ehc/Config.chs src/helium/Utils/OSSpecific.hs"
 
 # AC_CONFIG_FILES([bin/llvm-compilerdriver], [chmod +x bin/llvm-compilerdriver])
-ac_config_headers="$ac_config_headers src/ehc/ConfigDefines.chs src/rts/config.ch src/rts/mm/config.ch ehclib/base/include/MachDeps.h ehclib/base/include/HsBaseConfig.h"
+ac_config_headers="$ac_config_headers src/ehc/ConfigDefines.chs src/rts/config.ch src/rts/mm/config.ch ehclib/base/include/MachDeps.h ehclib/base/include/HsBaseConfig.h ehclib/oldtime/include/HsTimeConfig.h ehclib/directory/include/HsDirectoryConfig.h ehclib/unix/include/HsUnixConfig.h"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure

@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -XNoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
@@ -53,6 +54,9 @@ import IO                       ( bracket )
 import Foreign.ForeignPtr       ( FinalizerPtr )
 import UHC.IOBase
 import UHC.OldException         ( bracket )
+import UHC.Real -- [###] added
+import UHC.Base
+import UHC.Ptr
 #else
 import Control.Exception.Base   ( bracket )
 #endif
