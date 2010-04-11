@@ -34,7 +34,7 @@ main = do
   doesDirectoryExist cdim >>= print
   renameDirectory cdim cdim'
   doesDirectoryExist cdim' >>= print
- 
+  doesDirectoryExist cdim  >>= print
   doesDirectoryExist notExist >>= print
  
   removeDirectory cdir

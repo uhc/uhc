@@ -1,7 +1,4 @@
-{-# INCLUDE "HsTime.h" #-}
-{-# LINE 1 "System/Time.hsc" #-}
 -- [###] Overall: change foreign calls to direct to HsTime.h instead of time.h
-{-# LINE 2 "System/Time.hsc" #-}
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
 -- XXX with some combinations of #defines we get warnings, e.g.
 -- Warning: Defined but not used: `throwAwayReturnPointer'
@@ -111,15 +108,19 @@ module System.Time
 
      ) where
 
+#if defined(__GLASGOW_HASKELL__) || defined(__UHC__)
+#include "HsTime.h"
+#endif
 
-{-# LINE 112 "System/Time.hsc" #-}
-
-{-# LINE 113 "System/Time.hsc" #-}
-
-{-# LINE 114 "System/Time.hsc" #-}
-
-
-{-# LINE 124 "System/Time.hsc" #-}
+#ifdef __NHC__
+#include <time.h>
+#  if defined(__sun) || defined(__CYGWIN32__)
+#    define HAVE_TZNAME 1
+#  else
+#    define HAVE_TM_ZONE 1
+#  endif
+import Ix
+#endif
 
 import Prelude
 
@@ -127,11 +128,11 @@ import Data.Ix
 import System.Locale
 import Foreign
 
-
-{-# LINE 134 "System/Time.hsc" #-}
+#ifdef __HUGS__
+import Hugs.Time ( getClockTimePrim, toCalTimePrim, toClockTimePrim )
+#else
 import Foreign.C
-
-{-# LINE 136 "System/Time.hsc" #-}
+#endif
 
 -- One way to partition and give name to chunks of a year and a week:
 
@@ -240,20 +241,33 @@ realToInteger x = round (realToFrac x :: Double)
 -- | returns the current time in its internal representation.
 
 getClockTime :: IO ClockTime
-
-{-# LINE 250 "System/Time.hsc" #-}
+#ifdef __HUGS__
 getClockTime = do
-  allocaBytes (16) $ \ p_timeval -> do
-{-# LINE 252 "System/Time.hsc" #-}
+  (sec,usec) <- getClockTimePrim
+  return (TOD (fromIntegral sec) ((fromIntegral usec) * 1000000))
+
+#elif HAVE_GETTIMEOFDAY
+getClockTime = do
+  allocaBytes (#const sizeof(struct timeval)) $ \ p_timeval -> do
     throwErrnoIfMinus1_ "getClockTime" $ gettimeofday p_timeval nullPtr
-    sec  <- ((\hsc_ptr -> peekByteOff hsc_ptr 0))  p_timeval :: IO CTime
-{-# LINE 254 "System/Time.hsc" #-}
-    usec <- ((\hsc_ptr -> peekByteOff hsc_ptr 8)) p_timeval :: IO CTime
-{-# LINE 255 "System/Time.hsc" #-}
+    sec  <- (#peek struct timeval,tv_sec)  p_timeval :: IO CTime
+    usec <- (#peek struct timeval,tv_usec) p_timeval :: IO CTime
     return (TOD (realToInteger sec) ((realToInteger usec) * 1000000))
  
+#elif HAVE_FTIME
+getClockTime = do
+  allocaBytes (#const sizeof(struct timeb)) $ \ p_timeb -> do
+  ftime p_timeb
+  sec  <- (#peek struct timeb,time) p_timeb :: IO CTime
+  msec <- (#peek struct timeb,millitm) p_timeb :: IO CUShort
+  return (TOD (realToInteger sec) (fromIntegral msec * 1000000000))
 
-{-# LINE 271 "System/Time.hsc" #-}
+#else /* use POSIX time() */
+getClockTime = do
+    secs <- time nullPtr -- can't fail, according to POSIX
+    return (TOD (realToInteger secs) 0)
+
+#endif
 
 -- -----------------------------------------------------------------------------
 -- | @'addToClockTime' d t@ adds a time difference @d@ and a
@@ -336,8 +350,7 @@ normalizeTimeDiff td =
         , tdSec   = fromInteger diffSecs
         }
 
-
-{-# LINE 354 "System/Time.hsc" #-}
+#ifndef __HUGS__
 -- -----------------------------------------------------------------------------
 -- How do we deal with timezones on this architecture?
 
@@ -347,17 +360,57 @@ normalizeTimeDiff td =
 
 zone   :: Ptr CTm -> IO (Ptr CChar)
 gmtoff :: Ptr CTm -> IO CLong
+#if HAVE_TM_ZONE
+zone x      = (#peek struct tm,tm_zone) x
+gmtoff x    = (#peek struct tm,tm_gmtoff) x
 
-{-# LINE 364 "System/Time.hsc" #-}
-zone x      = ((\hsc_ptr -> peekByteOff hsc_ptr 48)) x
-{-# LINE 365 "System/Time.hsc" #-}
-gmtoff x    = ((\hsc_ptr -> peekByteOff hsc_ptr 40)) x
-{-# LINE 366 "System/Time.hsc" #-}
+#else /* ! HAVE_TM_ZONE */
+# if HAVE_TZNAME || defined(_WIN32)
+#  if cygwin32_HOST_OS
+#   define tzname _tzname
+#  endif
+#  ifndef mingw32_HOST_OS
+foreign import ccall unsafe "HsTime.h &tzname" tzname :: Ptr CString
+#  else
+foreign import ccall unsafe "__hscore_timezone" timezone :: Ptr CLong
+foreign import ccall unsafe "__hscore_tzname"   tzname :: Ptr CString
+#  endif
+zone x = do 
+  dst <- (#peek struct tm,tm_isdst) x
+  if dst then peekElemOff tzname 1 else peekElemOff tzname 0
+# else /* ! HAVE_TZNAME */
+-- We're in trouble. If you should end up here, please report this as a bug.
+#  error "Don't know how to get at timezone name on your OS."
+# endif /* ! HAVE_TZNAME */
 
+-- Get the offset in secs from UTC, if (struct tm) doesn't supply it. */
+# if HAVE_DECL_ALTZONE
+foreign import ccall "&altzone"  altzone  :: Ptr CTime
+foreign import ccall "&timezone" timezone :: Ptr CTime
+gmtoff x = do 
+  dst <- (#peek struct tm,tm_isdst) x
+  tz <- if dst then peek altzone else peek timezone
+  return (-fromIntegral (realToInteger tz))
+# else /* ! HAVE_DECL_ALTZONE */
 
-{-# LINE 413 "System/Time.hsc" #-}
+#if !defined(mingw32_HOST_OS)
+foreign import ccall "HsTime.h &timezone" timezone :: Ptr CLong
+#endif
 
-{-# LINE 414 "System/Time.hsc" #-}
+-- Assume that DST offset is 1 hour ...
+gmtoff x = do 
+  dst <- (#peek struct tm,tm_isdst) x
+  tz  <- peek timezone
+   -- According to the documentation for tzset(), 
+   --   http://www.opengroup.org/onlinepubs/007908799/xsh/tzset.html
+   -- timezone offsets are > 0 west of the Prime Meridian.
+   --
+   -- This module assumes the interpretation of tm_gmtoff, i.e., offsets
+   -- are > 0 East of the Prime Meridian, so flip the sign.
+  return (- (if dst then (fromIntegral tz - 3600) else tz))
+# endif /* ! HAVE_DECL_ALTZONE */
+#endif  /* ! HAVE_TM_ZONE */
+#endif /* ! __HUGS__ */
 
 -- -----------------------------------------------------------------------------
 -- | converts an internal clock time to a local time, modified by the
@@ -366,64 +419,84 @@ gmtoff x    = ((\hsc_ptr -> peekByteOff hsc_ptr 40)) x
 -- 'toCalendarTime' is in the 'IO' monad.
 
 toCalendarTime :: ClockTime -> IO CalendarTime
-
-{-# LINE 425 "System/Time.hsc" #-}
+#ifdef __HUGS__
+toCalendarTime =  toCalTime False
+#elif HAVE_LOCALTIME_R
 toCalendarTime =  clockToCalendarTime_reentrant (throwAwayReturnPointer localtime_r) False
-
-{-# LINE 429 "System/Time.hsc" #-}
+#else
+toCalendarTime =  clockToCalendarTime_static localtime False
+#endif
 
 -- | converts an internal clock time into a 'CalendarTime' in standard
 -- UTC format.
 
 toUTCTime :: ClockTime -> CalendarTime
-
-{-# LINE 437 "System/Time.hsc" #-}
+#ifdef __HUGS__
+toUTCTime      =  unsafePerformIO . toCalTime True
+#elif HAVE_GMTIME_R
 toUTCTime      =  unsafePerformIO . clockToCalendarTime_reentrant (throwAwayReturnPointer gmtime_r) True
+#else
+toUTCTime      =  unsafePerformIO . clockToCalendarTime_static gmtime True
+#endif
 
-{-# LINE 441 "System/Time.hsc" #-}
-
-
-{-# LINE 466 "System/Time.hsc" #-}
+#ifdef __HUGS__
+toCalTime :: Bool -> ClockTime -> IO CalendarTime
+toCalTime toUTC (TOD s psecs)
+  | (s > fromIntegral (maxBound :: Int)) || 
+    (s < fromIntegral (minBound :: Int))
+  = error ((if toUTC then "toUTCTime: " else "toCalendarTime: ") ++
+           "clock secs out of range")
+  | otherwise = do
+    (sec,min,hour,mday,mon,year,wday,yday,isdst,zone,off) <- 
+  		toCalTimePrim (if toUTC then 1 else 0) (fromIntegral s)
+    return (CalendarTime{ ctYear=1900+year
+  		        , ctMonth=toEnum mon
+		        , ctDay=mday
+		        , ctHour=hour
+		        , ctMin=min
+		        , ctSec=sec
+		        , ctPicosec=psecs
+		        , ctWDay=toEnum wday
+		        , ctYDay=yday
+		        , ctTZName=(if toUTC then "UTC" else zone)
+		        , ctTZ=(if toUTC then 0 else off)
+		        , ctIsDST=not toUTC && (isdst/=0)
+		        })
+#else /* ! __HUGS__ */
 throwAwayReturnPointer :: (Ptr CTime -> Ptr CTm -> IO (Ptr CTm))
                        -> (Ptr CTime -> Ptr CTm -> IO (       ))
 throwAwayReturnPointer fun x y = fun x y >> return ()
 
+#if !HAVE_LOCALTIME_R || !HAVE_GMTIME_R
+clockToCalendarTime_static :: (Ptr CTime -> IO (Ptr CTm)) -> Bool -> ClockTime
+	 -> IO CalendarTime
+clockToCalendarTime_static fun is_utc (TOD secs psec) = do
+  with (fromIntegral secs :: CTime)  $ \ p_timer -> do
+    p_tm <- fun p_timer 	-- can't fail, according to POSIX
+    clockToCalendarTime_aux is_utc p_tm psec
+#endif
 
-{-# LINE 478 "System/Time.hsc" #-}
-
-
-{-# LINE 480 "System/Time.hsc" #-}
+#if HAVE_LOCALTIME_R || HAVE_GMTIME_R
 clockToCalendarTime_reentrant :: (Ptr CTime -> Ptr CTm -> IO ()) -> Bool -> ClockTime
 	 -> IO CalendarTime
 clockToCalendarTime_reentrant fun is_utc (TOD secs psec) = do
   with (fromIntegral secs :: CTime)  $ \ p_timer -> do
-    allocaBytes (56) $ \ p_tm -> do
-{-# LINE 485 "System/Time.hsc" #-}
+    allocaBytes (#const sizeof(struct tm)) $ \ p_tm -> do
       fun p_timer p_tm
       clockToCalendarTime_aux is_utc p_tm psec
-
-{-# LINE 488 "System/Time.hsc" #-}
+#endif
 
 clockToCalendarTime_aux :: Bool -> Ptr CTm -> Integer -> IO CalendarTime
 clockToCalendarTime_aux is_utc p_tm psec = do
-    sec   <-  ((\hsc_ptr -> peekByteOff hsc_ptr 0)) p_tm :: IO CInt
-{-# LINE 492 "System/Time.hsc" #-}
-    minute <-  ((\hsc_ptr -> peekByteOff hsc_ptr 4)) p_tm :: IO CInt
-{-# LINE 493 "System/Time.hsc" #-}
-    hour  <-  ((\hsc_ptr -> peekByteOff hsc_ptr 8)) p_tm :: IO CInt
-{-# LINE 494 "System/Time.hsc" #-}
-    mday  <-  ((\hsc_ptr -> peekByteOff hsc_ptr 12)) p_tm :: IO CInt
-{-# LINE 495 "System/Time.hsc" #-}
-    mon   <-  ((\hsc_ptr -> peekByteOff hsc_ptr 16)) p_tm :: IO CInt
-{-# LINE 496 "System/Time.hsc" #-}
-    year  <-  ((\hsc_ptr -> peekByteOff hsc_ptr 20)) p_tm :: IO CInt
-{-# LINE 497 "System/Time.hsc" #-}
-    wday  <-  ((\hsc_ptr -> peekByteOff hsc_ptr 24)) p_tm :: IO CInt
-{-# LINE 498 "System/Time.hsc" #-}
-    yday  <-  ((\hsc_ptr -> peekByteOff hsc_ptr 28)) p_tm :: IO CInt
-{-# LINE 499 "System/Time.hsc" #-}
-    isdst <-  ((\hsc_ptr -> peekByteOff hsc_ptr 32)) p_tm :: IO CInt
-{-# LINE 500 "System/Time.hsc" #-}
+    sec   <-  (#peek struct tm,tm_sec  ) p_tm :: IO CInt
+    minute <-  (#peek struct tm,tm_min  ) p_tm :: IO CInt
+    hour  <-  (#peek struct tm,tm_hour ) p_tm :: IO CInt
+    mday  <-  (#peek struct tm,tm_mday ) p_tm :: IO CInt
+    mon   <-  (#peek struct tm,tm_mon  ) p_tm :: IO CInt
+    year  <-  (#peek struct tm,tm_year ) p_tm :: IO CInt
+    wday  <-  (#peek struct tm,tm_wday ) p_tm :: IO CInt
+    yday  <-  (#peek struct tm,tm_yday ) p_tm :: IO CInt
+    isdst <-  (#peek struct tm,tm_isdst) p_tm :: IO CInt
     zone' <-  zone p_tm
     tz    <-  gmtoff p_tm
     
@@ -445,16 +518,20 @@ clockToCalendarTime_aux is_utc p_tm psec = do
 		(if is_utc then "UTC" else tzname')
 		(if is_utc then 0     else fromIntegral tz)
 		(if is_utc then False else isdst /= 0))
-
-{-# LINE 522 "System/Time.hsc" #-}
+#endif /* ! __HUGS__ */
 
 -- | converts a 'CalendarTime' into the corresponding internal
 -- 'ClockTime', ignoring the contents of the  'ctWDay', 'ctYDay',
 -- 'ctTZName' and 'ctIsDST' fields.
 
 toClockTime :: CalendarTime -> ClockTime
-
-{-# LINE 535 "System/Time.hsc" #-}
+#ifdef __HUGS__
+toClockTime (CalendarTime yr mon mday hour min sec psec
+			  _wday _yday _tzname tz _isdst) =
+  unsafePerformIO $ do
+    s <- toClockTimePrim (yr-1900) (fromEnum mon) mday hour min sec tz
+    return (TOD (fromIntegral s) psec)
+#else /* ! __HUGS__ */
 toClockTime (CalendarTime year mon mday hour minute sec psec
 			  _wday _yday _tzname tz _isdst) =
 
@@ -471,22 +548,14 @@ toClockTime (CalendarTime year mon mday hour minute sec psec
         error "Time.toClockTime: timezone offset out of range"
     else
       unsafePerformIO $ do
-      allocaBytes (56) $ \ p_tm -> do
-{-# LINE 552 "System/Time.hsc" #-}
-        ((\hsc_ptr -> pokeByteOff hsc_ptr 0)) p_tm	(fromIntegral sec  :: CInt)
-{-# LINE 553 "System/Time.hsc" #-}
-        ((\hsc_ptr -> pokeByteOff hsc_ptr 4)) p_tm	(fromIntegral minute :: CInt)
-{-# LINE 554 "System/Time.hsc" #-}
-        ((\hsc_ptr -> pokeByteOff hsc_ptr 8)) p_tm	(fromIntegral hour :: CInt)
-{-# LINE 555 "System/Time.hsc" #-}
-        ((\hsc_ptr -> pokeByteOff hsc_ptr 12)) p_tm	(fromIntegral mday :: CInt)
-{-# LINE 556 "System/Time.hsc" #-}
-        ((\hsc_ptr -> pokeByteOff hsc_ptr 16)) p_tm	(fromIntegral (fromEnum mon) :: CInt)
-{-# LINE 557 "System/Time.hsc" #-}
-        ((\hsc_ptr -> pokeByteOff hsc_ptr 20)) p_tm	(fromIntegral year - 1900 :: CInt)
-{-# LINE 558 "System/Time.hsc" #-}
-        ((\hsc_ptr -> pokeByteOff hsc_ptr 32)) p_tm	isDst
-{-# LINE 559 "System/Time.hsc" #-}
+      allocaBytes (#const sizeof(struct tm)) $ \ p_tm -> do
+        (#poke struct tm,tm_sec  ) p_tm	(fromIntegral sec  :: CInt)
+        (#poke struct tm,tm_min  ) p_tm	(fromIntegral minute :: CInt)
+        (#poke struct tm,tm_hour ) p_tm	(fromIntegral hour :: CInt)
+        (#poke struct tm,tm_mday ) p_tm	(fromIntegral mday :: CInt)
+        (#poke struct tm,tm_mon  ) p_tm	(fromIntegral (fromEnum mon) :: CInt)
+        (#poke struct tm,tm_year ) p_tm	(fromIntegral year - 1900 :: CInt)
+        (#poke struct tm,tm_isdst) p_tm	isDst
 	t <- throwIf (== -1) (\_ -> "Time.toClockTime: invalid input")
 		(mktime p_tm)
         -- 
@@ -504,8 +573,7 @@ toClockTime (CalendarTime year mon mday hour minute sec psec
         gmtoffset <- gmtoff p_tm
         let res = realToInteger t - fromIntegral tz + fromIntegral gmtoffset
 	return (TOD res psec)
-
-{-# LINE 577 "System/Time.hsc" #-}
+#endif /* ! __HUGS__ */
 
 -- -----------------------------------------------------------------------------
 -- Converting time values to strings.
@@ -658,35 +726,42 @@ formatTimeDiff l fmt (TimeDiff year month day hour minute sec _)
 
    addS v s = if abs v == 1 then fst s else snd s
 
-
-{-# LINE 730 "System/Time.hsc" #-}
+#ifndef __HUGS__
 -- -----------------------------------------------------------------------------
 -- Foreign time interface (POSIX)
 
 type CTm = () -- struct tm
 
-
-{-# LINE 736 "System/Time.hsc" #-}
+#if HAVE_LOCALTIME_R
 foreign import ccall unsafe "HsTime.h localtime_r"
     localtime_r :: Ptr CTime -> Ptr CTm -> IO (Ptr CTm)
-
-{-# LINE 742 "System/Time.hsc" #-}
-
-{-# LINE 743 "System/Time.hsc" #-}
+#else
+foreign import ccall unsafe "HsTime.h localtime"
+    localtime   :: Ptr CTime -> IO (Ptr CTm)
+#endif
+#if HAVE_GMTIME_R
 foreign import ccall unsafe "HsTime.h gmtime_r"
     gmtime_r    :: Ptr CTime -> Ptr CTm -> IO (Ptr CTm)
-
-{-# LINE 749 "System/Time.hsc" #-}
+#else
+foreign import ccall unsafe "HsTime.h gmtime"
+    gmtime      :: Ptr CTime -> IO (Ptr CTm)
+#endif
 foreign import ccall unsafe "HsTime.h mktime"
     mktime      :: Ptr CTm   -> IO CTime
 
-
-{-# LINE 753 "System/Time.hsc" #-}
+#if HAVE_GETTIMEOFDAY
 type CTimeVal = ()
 type CTimeZone = ()
 foreign import ccall unsafe "HsTime.h gettimeofday"
     gettimeofday :: Ptr CTimeVal -> Ptr CTimeZone -> IO CInt
-
-{-# LINE 767 "System/Time.hsc" #-}
-
-{-# LINE 768 "System/Time.hsc" #-}
+#elif HAVE_FTIME
+type CTimeB = ()
+#ifndef mingw32_HOST_OS
+foreign import ccall unsafe "HsTime.h ftime" ftime :: Ptr CTimeB -> IO CInt
+#else
+foreign import ccall unsafe "HsTime.h ftime" ftime :: Ptr CTimeB -> IO ()
+#endif
+#else
+foreign import ccall unsafe "HsTime.h time" time :: Ptr CTime -> IO CTime
+#endif
+#endif /* ! __HUGS__ */

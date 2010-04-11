@@ -115,16 +115,18 @@ alloca  = doAlloca undefined
 -- The memory is freed when @f@ terminates (either normally or via an
 -- exception), so the pointer passed to @f@ must /not/ be used after this.
 --
-#ifdef __GLASGOW_HASKELL__
+
+-- [@@@] removed prim constructs and adapted GHC definition to work for UHC
+#if defined (__GLASGOW_HASKELL__) || defined(__UHC___)
 allocaBytes :: Int -> (Ptr a -> IO b) -> IO b
-allocaBytes (I# size) action = IO $ \ s0 ->
-     case newPinnedByteArray# size s0      of { (# s1, mbarr# #) ->
-     case unsafeFreezeByteArray# mbarr# s1 of { (# s2, barr#  #) ->
-     let addr = Ptr (byteArrayContents# barr#) in
+allocaBytes size action = IO $ \ s0 ->
+     case newPinnedByteArray size s0      of { ( s1, mbarr) ->
+     case unsafeFreezeByteArray mbarr s1 of { ( s2, barr) ->
+     let addr = Ptr (byteArrayContents barr) in
      case action addr     of { IO action' ->
-     case action' s2      of { (# s3, r #) ->
-     case touch# barr# s3 of { s4 ->
-     (# s4, r #)
+     case action' s2      of { (s3, r) ->
+     case touch barr s3 of { s4 ->
+     ( s4, r )
   }}}}}
 #else
 allocaBytes      :: forall a . Int -> (Ptr a -> IO b) -> IO b

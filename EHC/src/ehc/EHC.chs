@@ -352,7 +352,9 @@ doCompilePrepare fnL@(fn:_) opts
                         | d <- ehcOptPkgdirLocPath opts ++ [Cfg.mkInstallPkgdirUser opts, Cfg.mkInstallPkgdirSystem opts]
                         ]
                     )
-       ; let (pkgDb2,pkgErrs) = pkgDbSelectBySearchFilter (ehcOptPackageSearchFilter opts) pkgDb1
+       ; let (pkgDb2,pkgErrs) = pkgDbSelectBySearchFilter (pkgSearchFilter Just PackageSearchFilter_ExposePkg (pkgExposedPackages pkgDb1)
+                                                           ++ ehcOptPackageSearchFilter opts
+                                                          ) pkgDb1
              pkgDb3 = pkgDbFreeze pkgDb2
        -- ; putStrLn $ "db1 " ++ show pkgDb1
        -- ; putStrLn $ "db2 " ++ show pkgDb2
@@ -444,7 +446,7 @@ doCompileRun fnL@(fn:_) opts
                               ; fpsFound <- cpFindFilesForFPath False fileSuffMpHs' searchPath (Just nm) mbFp
 %%][99
                               ; let searchPath' = adaptedSearchPath mbPrev
-                              ; fpsFound <- cpFindFilesForFPathInLocations (fileLocSearch opts) const False fileSuffMpHs' searchPath' (Just nm) mbFp
+                              ; fpsFound <- cpFindFilesForFPathInLocations (fileLocSearch opts) (\(x,_,_) -> x) False fileSuffMpHs' searchPath' (Just nm) mbFp
 %%]]
                               ; when (ehcOptVerbosity opts >= VerboseDebug)
                                      (do { lift $ putStrLn $ show nm ++ ": " ++ show (fmap fpathToStr mbFp) ++ ": " ++ show (map fpathToStr fpsFound)

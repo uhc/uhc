@@ -49,9 +49,11 @@ main = do
   doesFileExist pFile >>= print
 
   copyFile pFile pFile1
+  doesFileExist pFile  >>= print
   doesFileExist pFile1  >>= print
   renameFile pFile1 pFile2
   doesFileExist pFile1  >>= print
+  doesFileExist pFile2  >>= print
   removeFile pFile2
   doesFileExist pFile2  >>= print
   

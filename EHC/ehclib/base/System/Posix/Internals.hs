@@ -55,6 +55,7 @@ import UHC.Base
 #else
 import System.IO
 #endif
+import Debug.Trace -- [DEBUG]
 
 #ifdef __HUGS__
 {-# CFILES cbits/PrelIOUtils.c cbits/dirUtils.c cbits/consUtils.c #-}
@@ -490,7 +491,7 @@ s_ischr cm = c_s_ischr cm /= 0
 s_isblk  :: CMode -> Bool
 s_isblk cm = c_s_isblk cm /= 0
 s_isdir  :: CMode -> Bool
-s_isdir cm = c_s_isdir cm /= 0
+s_isdir cm = {-trace ("s_isdir " ++ show cm ++ " ret: " ++ show (c_s_isdir cm))-} c_s_isdir cm /= 0
 s_isfifo :: CMode -> Bool
 s_isfifo cm = c_s_isfifo cm /= 0
 

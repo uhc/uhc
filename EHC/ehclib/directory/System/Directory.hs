@@ -887,16 +887,16 @@ exists and is a directory, and 'False' otherwise.
 
 doesDirectoryExist :: FilePath -> IO Bool
 doesDirectoryExist name =
-   (withFileStatus "doesDirectoryExist" name $ \st -> isDirectory st)
-   `catch` ((\ _ -> return False) :: IOException -> IO Bool)
+   (withFileStatus "doesDirectoryExist" name $ \st -> {-trace ("isDir" ++ show st-} isDirectory st) -- [DEBUG
+   `catch` ((\ _ -> {-trace ("err: " ++ show e)-} return False) :: IOException -> IO Bool) -- [DEBUG]
 
 {- |The operation 'doesFileExist' returns 'True'
 if the argument file exists and is not a directory, and 'False' otherwise.
 -}
-
+--[DEBUG]
 doesFileExist :: FilePath -> IO Bool
 doesFileExist name =
-   (withFileStatus "doesFileExist" name $ \st -> do b <- isDirectory st; return (not b))
+   (withFileStatus "doesFileExist" name $ \st -> do b <- isDirectory st; {-trace ("doesFileExist " ++ name ++ " -> " ++ show st)-} return (not b))
    `catch` ((\ _ -> return False) :: IOException -> IO Bool)
 
 {- |The 'getModificationTime' operation returns the
@@ -916,13 +916,25 @@ getModificationTime name =
  withFileStatus "getModificationTime" name $ \ st ->
  modificationTime st
 
+--[DEBUG]
 withFileStatus :: String -> FilePath -> (Ptr CStat -> IO a) -> IO a
 withFileStatus loc name f = do
+  --trace ("withFileStatus " ++ loc ++ " " ++ name)  i
   modifyIOError (`ioeSetFileName` name) $
     allocaBytes sizeof_stat $ \p ->
       withCString (fileNameEndClean name) $ \s -> do
+        x <- c_stat s p
+        --y <- test maxBound x
+        --traceShow (maxBound :: CInt) return ()
+        --traceShow y return ()
+        --trace ("With c_stat " ++ show x ++ " " ++ show (x == -1) ++ show (x < 0) ++ show (x == 0) ++ show (x > 0) ) 
         throwErrnoIfMinus1Retry_ loc (c_stat s p)
 	f p
+
+test :: CInt -> CInt -> IO ()
+test i x | x == i = trace ("TEST: " ++ show x ++ " == " ++ show i) return ()
+         | i == 0 = return ()
+         | otherwise = test (i - 1) x
 
 withFileOrSymlinkStatus :: String -> FilePath -> (Ptr CStat -> IO a) -> IO a
 withFileOrSymlinkStatus loc name f = do

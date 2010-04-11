@@ -8,13 +8,10 @@ EHCLIB_SYNC_ALL_PKG						:= $(EHC_PACKAGES_ASSUMED)
 # for each package a list of modules
 EHCLIB_SYNC_ALL_PKG_base_ASIS			:= $(patsubst %,include/%.h,Typeable dirUtils consUtils)
 EHCLIB_SYNC_ALL_PKG_base_C				:= $(patsubst %,cbits/%.c,)
-EHCLIB_SYNC_ALL_PKG_base				:= $(patsubst %,%.hs,) \
-											$(patsubst %,Data/%.hs,Bool Eq Ord Function Ratio String Complex Ix Dynamic) \
-											$(patsubst %,Unsafe/%.hs,) \
-											$(patsubst %,Foreign/%.hs,) \
+EHCLIB_SYNC_ALL_PKG_base				:= $(patsubst %,Data/%.hs,Bool Eq Ord Function Ratio String Complex Ix Dynamic) \
 											$(patsubst %,System/%.hs, Console/GetOpt) \
 											$(patsubst %,Text/%.hs,ParserCombinators/ReadPrec Read Show Show/Functions) \
-											$(patsubst %,Control/%.hs,Category Monad/Instances)
+											$(patsubst %,Control/%.hs,Arrow Category Monad/Instances)
 EHCLIB_SYNC_ALL_PKG_array_ASIS			:= 
 EHCLIB_SYNC_ALL_PKG_array_C				:= 
 EHCLIB_SYNC_ALL_PKG_array				:=
@@ -321,7 +318,9 @@ $(EHCLIB_HSC_ALL_DRV_HS): $(EHCLIB_BLD_VARIANT_ASPECTS_PREFIX)%.hs: $(EHCLIB_SRC
 	  --cflag='-D$(EHC_VARIANT_TARGET_UHC_DEFINE2)' \
 	  -I$(call FUN_INSTALLABS_VARIANT_INC_TARGET_PREFIX,$(EHC_VARIANT),$(EHC_VARIANT_TARGET)) \
 	  -I$(call FUN_INSTALLABS_VARIANT_INC_SHARED_PREFIX,$(EHC_VARIANT)) \
-	  $< && \
+    $(foreach pkg,$(EHC_PACKAGES_ASSUMED),-I$(EHCLIB_SRC_PREFIX)$(pkg)/include/) \
+	  $(foreach pkg,$(EHC_PACKAGES_ASSUMED),-I$(call FUN_MK_PKG_INC_DIR,$(call FUN_INSTALL_PKG_PREFIX,$(pkg)))) \
+    $< && \
 	touch $@
 
 ###########################################################################################

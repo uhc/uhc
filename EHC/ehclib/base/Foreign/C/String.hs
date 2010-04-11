@@ -210,7 +210,8 @@ castCharToCChar ch = fromIntegral (ord ch)
 -- | Marshal a NUL terminated C string into a Haskell string.
 --
 peekCAString    :: CString -> IO String
-#ifndef __GLASGOW_HASKELL__
+--[###] added UHC case
+#if !defined(__GLASGOW_HASKELL__) && !defined(__UHC__)
 peekCAString cp  = do
   cs <- peekArray0 nUL cp
   return (cCharsToChars cs)
@@ -228,7 +229,8 @@ peekCAString cp = do
 -- | Marshal a C string with explicit length into a Haskell string.
 --
 peekCAStringLen           :: CStringLen -> IO String
-#ifndef __GLASGOW_HASKELL__
+--[###] added UHC case
+#if !defined(__GLASGOW_HASKELL__) && !defined(__UHC__)
 peekCAStringLen (cp, len)  = do
   cs <- peekArray len cp
   return (cCharsToChars cs)
@@ -255,7 +257,8 @@ peekCAStringLen (cp, len)
 --   'Foreign.Marshal.Alloc.finalizerFree'.
 --
 newCAString :: String -> IO CString
-#ifndef __GLASGOW_HASKELL__
+--[###] added UHC case
+#if !defined(__GLASGOW_HASKELL__) && !defined(__UHC__)
 newCAString  = newArray0 nUL . charsToCChars
 #else
 newCAString str = do
@@ -275,7 +278,8 @@ newCAString str = do
 --   'Foreign.Marshal.Alloc.finalizerFree'.
 --
 newCAStringLen     :: String -> IO CStringLen
-#ifndef __GLASGOW_HASKELL__
+--[###] added UHC case
+#if !defined(__GLASGOW_HASKELL__) && !defined(__UHC__)
 newCAStringLen str  = do
   a <- newArray (charsToCChars str)
   return (pairLength str a)
@@ -301,7 +305,8 @@ newCAStringLen str = do
 --   storage must /not/ be used after this.
 --
 withCAString :: String -> (CString -> IO a) -> IO a
-#ifndef __GLASGOW_HASKELL__
+-- [###] added UHC case
+#if !defined(__GLASGOW_HASKELL__) && !defined(__UHC__)
 withCAString  = withArray0 nUL . charsToCChars
 #else
 withCAString str f =
@@ -322,7 +327,8 @@ withCAString str f =
 --   storage must /not/ be used after this.
 --
 withCAStringLen         :: String -> (CStringLen -> IO a) -> IO a
-#ifndef __GLASGOW_HASKELL__
+--[###] added UHC case
+#if !defined(__GLASGOW_HASKELL__) && !defined(__UHC__)
 withCAStringLen str act  = withArray (charsToCChars str) $ act . pairLength str
 #else
 withCAStringLen str f =
@@ -350,7 +356,8 @@ nUL  = 0
 pairLength :: String -> a -> (a, Int)
 pairLength  = flip (,) . length
 
-#ifndef __GLASGOW_HASKELL__
+--[###] added UHC case
+#if !defined(__GLASGOW_HASKELL__) && !defined(__UHC__)
 -- cast [CChar] to [Char]
 --
 cCharsToChars :: [CChar] -> [Char]

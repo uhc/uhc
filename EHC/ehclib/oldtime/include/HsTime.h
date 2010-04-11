@@ -1,4 +1,3 @@
-/*[###] Imported and not modified*/
 /*
  * (c) The University of Glasgow 2002
  *

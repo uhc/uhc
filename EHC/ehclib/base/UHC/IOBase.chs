@@ -512,13 +512,14 @@ data IOErrorType        -- alphabetical order of constructors required, assumed 
   | IllegalOperation    -- 5
   | InappropriateType   -- 6
   | InvalidArgument     -- 7
-  | NoSuchThing			-- 8
-  | OtherError    		-- 9
-  | PermissionDenied    -- 10
-  | ResourceBusy		-- 11
-  | ResourceExhausted   -- 12
-  | UnsupportedOperation-- 13
-  | UserError           -- 14
+  | Interrupted         -- 8 [###] added Interrupted
+  | NoSuchThing			    -- 9
+  | OtherError    		  -- 10
+  | PermissionDenied    -- 11
+  | ResourceBusy		    -- 12
+  | ResourceExhausted   -- 13
+  | UnsupportedOperation-- 14
+  | UserError           -- 15
     deriving (Eq)
 
 instance Show IOErrorType where
@@ -531,6 +532,7 @@ instance Show IOErrorType where
       IllegalOperation      -> "illegal operation"
       InappropriateType     -> "inappropriate type"
       InvalidArgument       -> "invalid argument"
+      Interrupted           -> "interrupted" -- [###] added
       NoSuchThing           -> "does not exist"
       OtherError            -> "other error"
       PermissionDenied      -> "permission denied"

@@ -111,6 +111,7 @@ we define _SYS_REENT_H_, which prevents sys/reent.h to be expanded.
 
 #undef errno
 -}
+import Debug.Trace
 #endif
 
 -- this is were we get the CONST_XXX definitions from that configure
@@ -372,13 +373,17 @@ throwErrnoIf_ pred loc f  = void $ throwErrnoIf pred loc f
 -- error code 'eINTR' - this amounts to the standard retry loop for
 -- interrupted POSIX system calls.
 --
+-- [DEBUG]
 throwErrnoIfRetry            :: (a -> Bool) -> String -> IO a -> IO a
-throwErrnoIfRetry pred loc f  = 
+throwErrnoIfRetry pred loc f  = --throwErrnoIf pred loc f [DEBUG]
   do
     res <- f
+    let x = pred res
+    --trace ("throwErrnoIfRetry1 | pred res=" ++ show x) return ()
     if pred res
       then do
         err <- getErrno
+        --trace ("throwErrnoIfRetry2 " ++ show (err == eINTR)) return ()
         if err == eINTR
           then throwErrnoIfRetry pred loc f
           else throwErrno loc
@@ -439,8 +444,14 @@ throwErrnoIfMinus1Retry  = throwErrnoIfRetry (== -1)
 
 -- | as 'throwErrnoIfMinus1', but discards the result.
 --
+--[DEBUG added Show]
 throwErrnoIfMinus1Retry_ :: Num a => String -> IO a -> IO ()
-throwErrnoIfMinus1Retry_  = throwErrnoIfRetry_ (== -1)
+--throwErrnoIfMinus1Retry_  = throwErrnoIfRetry_ (== -1)
+throwErrnoIfMinus1Retry_  loc comp = do
+  --trace ("throwErrnoIfMinus1Retry_ " ++ loc) return ()
+  --x <- comp
+  --trace ("throwErrnoIfMinus1Retry_ " ++ show (x == -1)) return ()
+  throwErrnoIfRetry_ (== -1) loc comp
 
 -- | as 'throwErrnoIfMinus1Retry', but checks for operations that would block.
 --
@@ -567,7 +578,7 @@ creation which tests if the current directory exits.
         | errno == eIDRM           = OtherError --ResourceVanished
         | errno == eILSEQ          = InvalidArgument
         | errno == eINPROGRESS     = AlreadyExists
-        | errno == eINTR           = OtherError --Interrupted
+        | errno == eINTR           = Interrupted
         | errno == eINVAL          = InvalidArgument
         | errno == eIO             = OtherError --HardwareFault
         | errno == eISCONN         = AlreadyExists
