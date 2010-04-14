@@ -115,6 +115,8 @@ public class Prim
     public static int primComplementInt( int v1 ) { return ~ v1 ; }
     public static int primShiftLeftInt( int v1, int n ) { return v1 << n ; }
     public static int primShiftRightInt( int v1, int n ) { return v1 >> n ; }
+
+    public static int primAddWord64( int v1, int v2 ) { return v1 + v2 ; }
 %%]
     
 %%[(8 jazy)
@@ -700,7 +702,18 @@ public class Prim
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%[(96 jazy)
-    // todo
+    // todo: these methods are not correct or tested; they're really just placeholders for the real implementations
+	// i had to put them here to make the generated JAR files run with the new IO implementation
+
+	public static Object primCatchException(Object a, Object func) {
+		warn("primCatchException");
+		return a;
+	}
+
+	public static Object primThrowException(Object exception) {
+		warn("primThrowException");
+		return null;
+	}
 %%]
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -864,7 +877,77 @@ PRIM GB_NodePtr gb_primOpenFileOrStd( GB_NodePtr nmNd, GB_Word modeEnum, GB_Node
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%[(99 jazy)
-    // todo
+    // todo: these methods are not correct or tested; they're really just placeholders for the real implementations
+	// i had to put them here to make the generated JAR files run with the new IO implementation
+
+    public static Object isatty(int fd) {
+		warn("isatty");
+		// this corresponds to "return 0" (in the IO Monad)
+		return new Function1() {
+			protected Object eval1(Object state) {
+				return new Object[] { state, new Integer(0) };
+			}
+		};
+    }
+
+	public static int __hscore_bufsiz() {
+		warn("__hscore_bufsiz");
+		return 256;
+	}
+
+	public static byte[] primNewPinnedByteArray(int sz) {
+		warn("primNewPinnedByteArray");
+		return new byte[sz];
+	}
+
+	public static Object primWriteWord8Array(byte[] array, int pos, char val) {
+		warn("primWriteWord8Array");
+		array[pos] = (byte)val;
+    	return RTS.Unit ;
+	}
+
+	public static int primByteArrayContents(byte[] array) {
+		warn("primByteArrayContents");
+		return -1;
+	}
+
+	public static Object memcpy(int dest, int src, long n) {
+		warn("memcpy");
+		final int returnMe = dest;
+		return new Function1() {
+			protected Object eval1(Object state) {
+				return new Object[] { state, new Integer(returnMe) };
+			}
+		};
+	}
+
+	public static Object rtsSupportsBoundThreads() {
+		warn("rtsSupportsBoundThreads");
+		return RTS.False;
+	}
+
+	public static Object write(int fd, int buf, int count) {
+		warn("write");
+		final int returnMe = count;
+		return new Function1() {
+			protected Object eval1(Object state) {
+				return new Object[] { state, new Integer(returnMe) };
+			}
+		};
+	}
+
+	public static Object _getErrno() {
+		warn("_getErrno");
+		return new Function1() {
+			protected Object eval1(Object state) {
+				return new Object[] { state, new Integer(0) };
+			}
+		};
+	}
+
+	private static void warn(String name) {
+		System.out.println("warning: "+name+" is not really implemented in the Jazy backend");
+	}
 %%]
     
 
