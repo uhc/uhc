@@ -927,7 +927,7 @@ withFileStatus loc name f = do
         --y <- test maxBound x
         --traceShow (maxBound :: CInt) return ()
         --traceShow y return ()
-        --trace ("With c_stat " ++ show x ++ " " ++ show (x == -1) ++ show (x < 0) ++ show (x == 0) ++ show (x > 0) ) 
+        --trace ("With c_stat " ++ show x ++ " " ++ show (x == -1) ++ show (x < 0) ++ show (x == 0) ++ show (x > 0) )   
         throwErrnoIfMinus1Retry_ loc (c_stat s p)
 	f p
 

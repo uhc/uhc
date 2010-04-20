@@ -224,7 +224,8 @@ tcSetAttr fd fun = do
         throwErrnoIfMinus1Retry "tcSetAttr"
            (c_tcgetattr fd p_tios)
 
-#ifdef __GLASGOW_HASKELL__
+-- [@@@] same problem with sizeof_sigset_t which is not defined in windows systems.
+#if defined(__GLASGOW_HASKELL__) || defined(__UHC__)
         -- Save a copy of termios, if this is a standard file descriptor.
         -- These terminal settings are restored in hs_exit().
         when (fd <= 2) $ do
@@ -251,7 +252,8 @@ tcSetAttr fd fun = do
              c_sigprocmask const_sig_setmask p_old_sigset nullPtr
              return r))
 
-#ifdef __GLASGOW_HASKELL__
+-- [@@@] don't forget to test this
+#if defined(__GLASGOW_HASKELL__) || defined(__UHC__)
 foreign import ccall unsafe "HsBase.h __hscore_get_saved_termios"
    get_saved_termios :: CInt -> IO (Ptr CTermios)
 
@@ -519,6 +521,9 @@ foreign import ccall unsafe "HsBase.h __hscore_f_setfl"      const_f_setfl :: CI
 
 #if defined(HTYPE_TCFLAG_T)
 foreign import ccall unsafe "HsBase.h __hscore_sizeof_termios"  sizeof_termios :: Int
+
+-- [@@@] sizeof_sigset_t is defined only for non-windows system in HsBase. 
+-- Thus we should be carefull to ommit it in windows systems, or HTYPE_TCFLAT_T => non-windows? (which is not true at least on my system). For the momement, modified HsBase to define the function also for windows
 foreign import ccall unsafe "HsBase.h __hscore_sizeof_sigset_t" sizeof_sigset_t :: Int
 
 foreign import ccall unsafe "HsBase.h __hscore_lflag" c_lflag :: Ptr CTermios -> IO CTcflag

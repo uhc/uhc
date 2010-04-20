@@ -62,8 +62,6 @@ import UHC.Conc
 %%]
 
 %%[99
--- [###] modified from 9999 to 99. There is a comment about GHC users, should we do something about it?
-
 -- ---------------------------------------------------------------------------
 -- Simple input operations
 

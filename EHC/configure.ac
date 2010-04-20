@@ -623,6 +623,8 @@ AC_CHECK_FUNCS([ftruncate getclock getrusage gettimeofday lstat readdir_r _chsiz
 
 AC_CHECK_FUNCS([ftime gmtime_r localtime_r])
 
+AC_CHECK_FUNCS([lchown]) 
+
 dnl ** check if it is safe to include both <time.h> and <sys/time.h>
 AC_HEADER_TIME
 
@@ -633,13 +635,6 @@ dnl ** do we have altzone?
 FP_DECL_ALTZONE
 
 ### type configuration, machine characteristics
-
-# if you look at configure.ac from ghc/libraries/base then you can see that they make  tests like this
-# FPTOOLS_CHECK_HTYPE(cc_t)
-# FPTOOLS_CHECK_HTYPE(tcflag_t)
-
-# sizeof GrWord
-# AC_CHECK_SIZEOF([unsigned int])
 
 # sizeof GrWord*, Pointer, ...
 AC_CHECK_SIZEOF([char])

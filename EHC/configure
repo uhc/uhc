@@ -5524,6 +5524,18 @@ fi
 done
 
 
+for ac_func in lchown
+do :
+  ac_fn_c_check_func "$LINENO" "lchown" "ac_cv_func_lchown"
+if test "x$ac_cv_func_lchown" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LCHOWN 1
+_ACEOF
+
+fi
+done
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether time.h and sys/time.h may both be included" >&5
 $as_echo_n "checking whether time.h and sys/time.h may both be included... " >&6; }
 if test "${ac_cv_header_time+set}" = set; then :
@@ -5699,13 +5711,6 @@ _ACEOF
 
 
 ### type configuration, machine characteristics
-
-# if you look at configure.ac from ghc/libraries/base then you can see that they make  more tests like this
-# FPTOOLS_CHECK_HTYPE(cc_t)
-# FPTOOLS_CHECK_HTYPE(tcflag_t)
-
-# sizeof GrWord
-# AC_CHECK_SIZEOF([unsigned int])
 
 # sizeof GrWord*, Pointer, ...
 # The cast to long int works around a bug in the HP C Compiler

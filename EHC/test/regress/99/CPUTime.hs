@@ -11,12 +11,12 @@ import System.CPUTime
 main :: IO ()
 
 main = do
-  putStrLn $ show cpuTimePrecision
+  print cpuTimePrecision
   time <- getCPUTime
-  putStrLn $ show time
-  putStrLn $ show $ f ([1..10000] :: [Int])
+  print time
+  print $ f ([1..1000] :: [Int])
   time' <- getCPUTime
-  putStrLn $ show time'
-
+  print (time' >= time)
+  
 f :: [Int] -> Int
 f xs = length xs + head xs

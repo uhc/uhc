@@ -136,9 +136,9 @@ EHCLIB_GHCSYNC_FROZEN_DRV_ARCH			:= $(EHCLIB_BLD_SYNC_PREFIX)$(EHCLIB_GHCSYNC_FR
 #EHCLIB_BASE_OPTS						= 
 EHCLIB_BASE_OPTS						= -O2
 
-EHCLIB_DEBUG_OPTS						=
+#EHCLIB_DEBUG_OPTS						=
 #EHCLIB_DEBUG_OPTS						= --no-hi-check
-#EHCLIB_DEBUG_OPTS						= --dump-core-stages=1 --dump-grin-stages=1 --gen-trace=1 --gen-cmt=1
+EHCLIB_DEBUG_OPTS						= --dump-core-stages=1 --dump-grin-stages=1 --gen-trace=1 --gen-cmt=1
 #EHCLIB_DEBUG_OPTS						= --target-flavor=debug --dump-core-stages=1 --dump-grin-stages=1 --gen-trace=1 --gen-cmt=1
 #EHCLIB_DEBUG_OPTS						= -O0
 #EHCLIB_DEBUG_OPTS						= -v3
@@ -310,17 +310,23 @@ $(EHCLIB_CHS_ALL_DRV_HS): $(EHCLIB_BLD_VARIANT_ASPECTS_PREFIX)%.hs: $(EHCLIB_SRC
 	touch $@
 
 # generate .hs from .hsc via hsc2hs
+# it seems that there is a problem with hsc2hs in the ghc 10.4 and the fix is to pass ghc as the c compiler (--cc).
 $(EHCLIB_HSC_ALL_DRV_HS): $(EHCLIB_BLD_VARIANT_ASPECTS_PREFIX)%.hs: $(EHCLIB_SRC_PREFIX)%.hsc
-	mkdir -p $(@D)
-	$(HSC2HS) --output=$@ --cc=$(GCC) \
-	  --cflag='-D__UHC__=$(EH_VERSION_ASNUMBER)' \
-	  --cflag='-D$(EHC_VARIANT_TARGET_UHC_DEFINE1)' \
-	  --cflag='-D$(EHC_VARIANT_TARGET_UHC_DEFINE2)' \
-	  -I$(call FUN_INSTALLABS_VARIANT_INC_TARGET_PREFIX,$(EHC_VARIANT),$(EHC_VARIANT_TARGET)) \
-	  -I$(call FUN_INSTALLABS_VARIANT_INC_SHARED_PREFIX,$(EHC_VARIANT)) \
-    $(foreach pkg,$(EHC_PACKAGES_ASSUMED),-I$(EHCLIB_SRC_PREFIX)$(pkg)/include/) \
-	  $(foreach pkg,$(EHC_PACKAGES_ASSUMED),-I$(call FUN_MK_PKG_INC_DIR,$(call FUN_INSTALL_PKG_PREFIX,$(pkg)))) \
-    $< && \
+	mkdir -p $(@D) && \
+    $(HSC2HS) -v --output=$@ --no-compile --cc=$(GHC1)     \
+	$< && \
+	$(GCC) -D__UHC__=$(EH_VERSION_ASNUMBER) \
+	      -D$(EHC_VARIANT_TARGET_UHC_DEFINE1) \
+	      -D$(EHC_VARIANT_TARGET_UHC_DEFINE2) \
+	      -I$(call FUN_INSTALLABS_VARIANT_INC_TARGET_PREFIX,$(EHC_VARIANT),$(EHC_VARIANT_TARGET)) \
+	      -I$(call FUN_INSTALLABS_VARIANT_INC_SHARED_PREFIX,$(EHC_VARIANT)) \
+		    $(foreach pkg,$(EHC_PACKAGES_ASSUMED),-I$(EHCLIB_SRC_PREFIX)$(pkg)/include/) \
+	        $(foreach pkg,$(EHC_PACKAGES_ASSUMED),-I$(call FUN_MK_PKG_INC_DIR,$(call FUN_INSTALL_PKG_PREFIX,$(pkg)))) \
+		  -o $(@:.hs=_hsc_make) \
+		  $(@:.hs=_hsc_make.c) \
+	&& \
+	$(@:.hs=_hsc_make) > $@ \
+	&& \
 	touch $@
 
 ###########################################################################################

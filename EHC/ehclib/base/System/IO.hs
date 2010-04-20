@@ -258,7 +258,7 @@ putChar c       =  hPutChar stdout c
 -- (same as 'hPutStr' 'stdout').
 
 putStr          :: String -> IO ()
-putStr s        =  hPutStr stdout s  >> hFlush stdout --- [@@@] probably a bug with flushing sdout
+putStr s        =  hPutStr stdout s   >> hFlush stdout --- [@@@] probably a bug with flushing sdout
 
 -- | The same as 'putStr', but adds a newline character.
 
