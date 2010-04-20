@@ -148,6 +148,8 @@ public class Prim
     		return RTS.EQ ;
     	}
     }
+
+    public static Object primEqInt64( int v1, int v2 ) { return RTS.mkBool(v1 == v2) ; }
 %%]
     
 %%[(95 jazy)
@@ -877,76 +879,273 @@ PRIM GB_NodePtr gb_primOpenFileOrStd( GB_NodePtr nmNd, GB_Word modeEnum, GB_Node
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%[(99 jazy)
-    // todo: these methods are not correct or tested; they're really just placeholders for the real implementations
-	// i had to put them here to make the generated JAR files run with the new IO implementation
+    // todo: the functions for io are very incomplete
+
+	static Pointers pointers = new Pointers();
+
+	// Used to return error codes from system calls and library functions.
+	// Note: When we implement threading, we should probably have one of these per thread.
+	static int errno = 0;
+
+	static FileDescriptorTable fileDescriptorTable;
+	static {
+		fileDescriptorTable = new FileDescriptorTable();
+		fileDescriptorTable.add(new Handle(System.in));
+		fileDescriptorTable.add(new Handle(System.out));
+		fileDescriptorTable.add(new Handle(System.err));
+	}
 
     public static Object isatty(int fd) {
-		warn("isatty");
-		// this corresponds to "return 0" (in the IO Monad)
-		return new Function1() {
-			protected Object eval1(Object state) {
-				return new Object[] { state, new Integer(0) };
-			}
-		};
+		// Java does not seem to have any support for terminal I/O at all, so we always return false
+		return ioReturn(new Integer(0));
     }
 
 	public static int __hscore_bufsiz() {
-		warn("__hscore_bufsiz");
-		return 256;
+		return 8192;
 	}
 
 	public static byte[] primNewPinnedByteArray(int sz) {
-		warn("primNewPinnedByteArray");
-		return new byte[sz];
+		// since we're only using Java here (no native code), we don't have to worry about pinning objects
+		byte[] bytes = new byte[sz];
+		pointers.registerObject(bytes);
+		return bytes;
 	}
 
 	public static Object primWriteWord8Array(byte[] array, int pos, char val) {
-		warn("primWriteWord8Array");
 		array[pos] = (byte)val;
-    	return RTS.Unit ;
+    	return RTS.Unit;
 	}
 
+	// return the pointer to the array
 	public static int primByteArrayContents(byte[] array) {
-		warn("primByteArrayContents");
-		return -1;
+		return pointers.getPointer(array);
 	}
 
+	// copy 'n' bytes from the array pointed to by 'src' to the array pointed to by 'dest'
+	// 'src' and 'dest' must point to byte arrays
 	public static Object memcpy(int dest, int src, long n) {
-		warn("memcpy");
-		final int returnMe = dest;
-		return new Function1() {
-			protected Object eval1(Object state) {
-				return new Object[] { state, new Integer(returnMe) };
-			}
-		};
+		byte[] destArray = (byte[])pointers.dereference(dest);
+		byte[] srcArray = (byte[])pointers.dereference(src);
+		System.arraycopy(srcArray, 0, destArray, 0, (int)n);
+		return ioReturn(new Integer(dest));
 	}
 
 	public static Object rtsSupportsBoundThreads() {
-		warn("rtsSupportsBoundThreads");
 		return RTS.False;
 	}
 
 	public static Object write(int fd, int buf, int count) {
-		warn("write");
-		final int returnMe = count;
-		return new Function1() {
-			protected Object eval1(Object state) {
-				return new Object[] { state, new Integer(returnMe) };
-			}
-		};
+		// look up fd
+		Handle handle = fileDescriptorTable.getHandle(fd);
+		if (handle == null || handle.out == null) {
+			errno = Errno.EBADF;
+			return ioReturn(-1);
+		}
+		OutputStream out = handle.out;
+
+		// look up buf
+		byte[] array = (byte[])pointers.dereference(buf);
+
+		try {
+			out.write(array, 0, count);
+		} catch (IOException e) {
+			e.printStackTrace(System.out);
+			errno = Errno.EIO;
+			return ioReturn(new Integer(-1));
+		}
+		return ioReturn(new Integer(count));
 	}
 
 	public static Object _getErrno() {
-		warn("_getErrno");
+		return ioReturn(new Integer(errno));
+	}
+
+	public static Object malloc(long size) {
+		byte[] array = new byte[(int)size];
+		int ptr = pointers.registerObject(array);
+		return ioReturn(ptr);
+	}
+
+	public static Object free(int ptr) {
+		pointers.remove(ptr);
+		return ioReturn(RTS.Unit);
+	}
+
+	public static int primNullAddr() {
+		return 0;
+	}
+
+	public static Object primWriteWord8OffAddr(int ptr, int offset, int val) {
+		byte[] array = (byte[])pointers.dereference(ptr);
+		return primWriteWord8Array(array, offset, (char)val);
+	}
+
+	public static Object __hscore_open(int strPtr, int how, int mode) {
+		System.err.println(
+			"__hscore_open called with strPtr="+strPtr+", how="+how+", mode="+mode);
+		warn("__hscore_open");
+
+		// get filename
+		byte[] array = (byte[])pointers.dereference(strPtr);
+		String filename = zstrToString(array);
+		System.err.println("filename = "+filename);
+
+		// TODO: take other flags into account (O_APPEND, O_CREAT etc)
+
+		// open stream(s)
+		File file = new File(filename);
+		int accessMode = how & 0x3;
+		System.err.println("accessMode = "+accessMode);
+		OutputStream out = null;
+		InputStream in = null;
+		try {
+			if (accessMode != Fcntl.O_WRONLY)
+				in = new FileInputStream(file);
+			if (accessMode != Fcntl.O_RDONLY)
+				out = new FileOutputStream(file);
+		} catch (IOException e) {
+			// TODO: handle errors
+			e.printStackTrace(System.out);
+			System.exit(1);
+		}
+
+		// add entry to the FileDescriptorTable
+		Handle handle = new Handle(in, out);
+		int fd = fileDescriptorTable.add(handle);
+		System.err.println("fd = "+fd);
+
+		return ioReturn(new Integer(fd));
+	}
+
+	// close a file descriptor, so that it no longer refers to any file and may be reused
+	public static Object close(int fd) {
+		Handle handle = fileDescriptorTable.getHandle(fd);
+		if (handle == null) {
+			errno = Errno.EBADF;
+			return ioReturn(new Integer(-1));
+		}
+		try {
+			if (handle.in != null)
+				handle.in.close();
+			if (handle.out != null)
+				handle.out.close();
+		} catch (IOException e) {
+			e.printStackTrace(System.out);
+			errno = Errno.EIO;
+			return ioReturn(new Integer(-1));
+		}
+		fileDescriptorTable.remove(fd);
+		return ioReturn(new Integer(0));
+	}
+
+	public static int __hscore_sizeof_stat() {
+		warn("__hscore_sizeof_stat");
+		return 1;
+	}
+
+	public static Object __hscore_fstat(int fd, int bufPtr) {
+		System.err.println("__hscore_fstat called with fd="+fd+", bufPtr="+bufPtr);
+		warn("__hscore_fstat");
+		return ioReturn(new Integer(0));
+	}
+
+	// accessing information from __hscore_fstat
+	public static Object __hscore_st_mtime(int ptr) {
+		warn("__hscore_st_mtime");
+		return ioReturn(new Integer(0));
+	}
+	public static Object __hscore_st_size(int ptr) {
+		warn("__hscore_st_size");
+		return ioReturn(new Integer(0));
+	}
+	public static Object __hscore_st_mode(int ptr) {
+		warn("__hscore_st_mode");
+		return ioReturn(new Integer(0));
+	}
+	public static Object __hscore_st_dev(int ptr) {
+		warn("__hscore_st_dev");
+		return ioReturn(new Integer(0));
+	}
+	public static Object __hscore_st_ino(int ptr) {
+		warn("__hscore_st_ino");
+		return ioReturn(new Integer(0));
+	}
+
+	// interpret CMode values
+	public static int __hscore_s_isreg(int cmode) {
+		warn("__hscore_s_isreg");
+		return 1;
+	};
+	public static int __hscore_s_ischr(int cmode) {
+		warn("__hscore_s_ischr");
+		return 0;
+	};
+	public static int __hscore_s_isblk(int cmode) {
+		warn("__hscore_s_isblk");
+		return 0;
+	};
+	public static int __hscore_s_isdir(int cmode) {
+		warn("__hscore_s_isdir");
+		return 0;
+	};
+	public static int __hscore_s_isfifo(int cmode) {
+		warn("__hscore_s_isfifo");
+		return 0;
+	};
+	public static int __hscore_s_issock(int cmode) {
+		warn("__hscore_s_issock");
+		return 0;
+	};
+
+	public static Object __hscore_ftruncate(int fd, long where) {
+		warn("__hscore_ftruncate");
+		return ioReturn(new Integer(0));
+	}
+
+	// POSIX flags only:
+	public static int __hscore_o_rdonly() { return Fcntl.O_RDONLY; }
+	public static int __hscore_o_wronly() { return Fcntl.O_WRONLY; }
+	public static int __hscore_o_rdwr()   { return Fcntl.O_RDWR; }
+	public static int __hscore_o_append() { return Fcntl.O_APPEND; }
+	public static int __hscore_o_creat()  { return Fcntl.O_CREAT; }
+	public static int __hscore_o_excl()   { return Fcntl.O_EXCL; }
+	public static int __hscore_o_trunc()  { return Fcntl.O_TRUNC; }
+
+	// non-POSIX flags:
+	public static int __hscore_o_noctty()   { return Fcntl.O_NOCTTY; }
+	public static int __hscore_o_nonblock() { return Fcntl.O_NONBLOCK; }
+	public static int __hscore_o_binary()   { return Fcntl.O_BINARY; }
+
+
+
+	// XXX: might want to move these to a separate class with utility methods
+
+	// convert a zero-terminated string to a Java String
+	private static String zstrToString(byte[] zstr) {
+		return new String(zstr, 0, strlen(zstr));
+	}
+	private static int strlen(byte[] zstr) {
+		int i;
+		for (i = 0; i < zstr.length; i++)
+			if (zstr[i] == 0)
+				return i;
+		return i;
+	}
+
+
+
+	// "return a" in the IO monad
+	private static <A> Object ioReturn(A a) {
+		final A finalA = a;
 		return new Function1() {
 			protected Object eval1(Object state) {
-				return new Object[] { state, new Integer(0) };
+				return new Object[] { state, finalA };
 			}
 		};
 	}
 
 	private static void warn(String name) {
-		System.out.println("warning: "+name+" is not really implemented in the Jazy backend");
+		System.err.println("warning: "+name+" is not really implemented in the Jazy backend");
 	}
 %%]
     

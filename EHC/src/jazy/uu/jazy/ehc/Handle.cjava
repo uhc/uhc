@@ -22,6 +22,11 @@ public class Handle
 %%[(98 jazy)
     public InputStream in = null ;
     public OutputStream out = null ;
+
+	public Handle( InputStream i, OutputStream o ) {
+		in = i;
+		out = o;
+	}
     
     public Handle( InputStream i ) {
     	in = i ;
