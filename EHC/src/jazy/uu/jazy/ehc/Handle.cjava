@@ -1,12 +1,6 @@
 %%[(8 jazy)
 package uu.jazy.ehc ;
 
-/**
- * Lazy and Functional.
- * Package for laziness and functions as known from functional languages.
- * Written by Atze Dijkstra, atze@cs.uu.nl
- */
-
 import java.util.* ;
 import java.io.* ;
 
@@ -20,6 +14,7 @@ public class Handle
 %%]
 
 %%[(98 jazy)
+	public File file = null;
     public InputStream in = null ;
     public OutputStream out = null ;
 

@@ -980,39 +980,59 @@ PRIM GB_NodePtr gb_primOpenFileOrStd( GB_NodePtr nmNd, GB_Word modeEnum, GB_Node
 		return primWriteWord8Array(array, offset, (char)val);
 	}
 
+	// open and possibly create a file
 	public static Object __hscore_open(int strPtr, int how, int mode) {
-		System.err.println(
-			"__hscore_open called with strPtr="+strPtr+", how="+how+", mode="+mode);
-		warn("__hscore_open");
-
 		// get filename
 		byte[] array = (byte[])pointers.dereference(strPtr);
-		String filename = zstrToString(array);
-		System.err.println("filename = "+filename);
+		String filename = Util.zstrToString(array);
 
-		// TODO: take other flags into account (O_APPEND, O_CREAT etc)
+		// check flags
+		boolean append = (how & Fcntl.O_APPEND) != 0;
+
+		int accessMode = how & 0x3;
+		boolean readOnly = accessMode == Fcntl.O_RDONLY;
+		boolean writeOnly = accessMode == Fcntl.O_WRONLY;
+
+		boolean create = (how & Fcntl.O_CREAT) != 0;
+		boolean mustCreate = create && (how & Fcntl.O_EXCL) != 0;
+
+		// ignored: O_ASYNC, O_NOCTTY
+
+		// TODO: do we need to implement O_TRUNC, O_NONBLOCK, O_NDELAY, O_SYNC ?
+
+		// check if the file exists
+		File file = new File(filename);
+		if (mustCreate && file.exists()) {
+			errno = Errno.EEXIST;
+			return ioReturn(new Integer(-1));
+		}
+		if ( ! file.exists() && ! create) {
+			errno = Errno.ENOENT;
+			return ioReturn(new Integer(-1));
+		}
+		if (file.isDirectory()) {
+			errno = Errno.EISDIR;
+			return ioReturn(new Integer(-1));
+		}
 
 		// open stream(s)
-		File file = new File(filename);
-		int accessMode = how & 0x3;
-		System.err.println("accessMode = "+accessMode);
 		OutputStream out = null;
 		InputStream in = null;
 		try {
-			if (accessMode != Fcntl.O_WRONLY)
+			if ( ! writeOnly)
 				in = new FileInputStream(file);
-			if (accessMode != Fcntl.O_RDONLY)
-				out = new FileOutputStream(file);
+			if ( ! readOnly)
+				out = new FileOutputStream(file, append);
 		} catch (IOException e) {
-			// TODO: handle errors
 			e.printStackTrace(System.out);
-			System.exit(1);
+			errno = Errno.EACCES;
+			return ioReturn(new Integer(-1));
 		}
 
 		// add entry to the FileDescriptorTable
 		Handle handle = new Handle(in, out);
+		handle.file = file;
 		int fd = fileDescriptorTable.add(handle);
-		System.err.println("fd = "+fd);
 
 		return ioReturn(new Integer(fd));
 	}
@@ -1039,65 +1059,76 @@ PRIM GB_NodePtr gb_primOpenFileOrStd( GB_NodePtr nmNd, GB_Word modeEnum, GB_Node
 	}
 
 	public static int __hscore_sizeof_stat() {
-		warn("__hscore_sizeof_stat");
-		return 1;
+		return Stat.bufferSize();
 	}
 
+	// get file status
 	public static Object __hscore_fstat(int fd, int bufPtr) {
-		System.err.println("__hscore_fstat called with fd="+fd+", bufPtr="+bufPtr);
-		warn("__hscore_fstat");
+		Handle handle = fileDescriptorTable.getHandle(fd);
+		if (handle == null || handle.file == null) {
+			errno = Errno.EBADF;
+			return ioReturn(-1);
+		}
+
+		byte[] buffer = (byte[])pointers.dereference(bufPtr);
+
+		Stat stat = new Stat(handle.file);
+		stat.writeToBuffer(buffer);
+
 		return ioReturn(new Integer(0));
 	}
 
 	// accessing information from __hscore_fstat
 	public static Object __hscore_st_mtime(int ptr) {
-		warn("__hscore_st_mtime");
-		return ioReturn(new Integer(0));
+		byte[] buffer = (byte[])pointers.dereference(ptr);
+		Stat stat = new Stat(buffer);
+		return ioReturn(new Long(stat.mtime));
 	}
 	public static Object __hscore_st_size(int ptr) {
-		warn("__hscore_st_size");
-		return ioReturn(new Integer(0));
+		byte[] buffer = (byte[])pointers.dereference(ptr);
+		Stat stat = new Stat(buffer);
+		return ioReturn(new Long(stat.size));
 	}
 	public static Object __hscore_st_mode(int ptr) {
-		warn("__hscore_st_mode");
-		return ioReturn(new Integer(0));
+		byte[] buffer = (byte[])pointers.dereference(ptr);
+		Stat stat = new Stat(buffer);
+		return ioReturn(new Integer(stat.mode));
 	}
 	public static Object __hscore_st_dev(int ptr) {
+		// get device id -- not possible in Java
 		warn("__hscore_st_dev");
 		return ioReturn(new Integer(0));
 	}
 	public static Object __hscore_st_ino(int ptr) {
+		// get inode number -- not possible in Java
 		warn("__hscore_st_ino");
 		return ioReturn(new Integer(0));
 	}
 
 	// interpret CMode values
 	public static int __hscore_s_isreg(int cmode) {
-		warn("__hscore_s_isreg");
-		return 1;
+		return cmode & StMode.S_IFREG;
 	};
 	public static int __hscore_s_ischr(int cmode) {
-		warn("__hscore_s_ischr");
-		return 0;
+		return cmode & StMode.S_IFCHR;
 	};
 	public static int __hscore_s_isblk(int cmode) {
-		warn("__hscore_s_isblk");
-		return 0;
+		return cmode & StMode.S_IFBLK;
 	};
 	public static int __hscore_s_isdir(int cmode) {
-		warn("__hscore_s_isdir");
-		return 0;
+		return cmode & StMode.S_IFDIR;
 	};
 	public static int __hscore_s_isfifo(int cmode) {
-		warn("__hscore_s_isfifo");
-		return 0;
+		return cmode & StMode.S_IFIFO;
 	};
 	public static int __hscore_s_issock(int cmode) {
-		warn("__hscore_s_issock");
-		return 0;
+		return cmode & StMode.S_IFSOCK;
 	};
 
+	// truncate a file to a specified length
 	public static Object __hscore_ftruncate(int fd, long where) {
+		// to implement this, we would probably need java.nio
+		// (introduced in Java 1.4)
 		warn("__hscore_ftruncate");
 		return ioReturn(new Integer(0));
 	}
@@ -1115,22 +1146,6 @@ PRIM GB_NodePtr gb_primOpenFileOrStd( GB_NodePtr nmNd, GB_Word modeEnum, GB_Node
 	public static int __hscore_o_noctty()   { return Fcntl.O_NOCTTY; }
 	public static int __hscore_o_nonblock() { return Fcntl.O_NONBLOCK; }
 	public static int __hscore_o_binary()   { return Fcntl.O_BINARY; }
-
-
-
-	// XXX: might want to move these to a separate class with utility methods
-
-	// convert a zero-terminated string to a Java String
-	private static String zstrToString(byte[] zstr) {
-		return new String(zstr, 0, strlen(zstr));
-	}
-	private static int strlen(byte[] zstr) {
-		int i;
-		for (i = 0; i < zstr.length; i++)
-			if (zstr[i] == 0)
-				return i;
-		return i;
-	}
 
 
 
