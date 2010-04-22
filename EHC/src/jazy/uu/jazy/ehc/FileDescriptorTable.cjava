@@ -4,7 +4,7 @@ package uu.jazy.ehc;
 import java.util.ArrayList;
 import java.util.List;
 
-// Emulate C's file descriptor in Java.
+// Emulate the Unix/C file descriptor table in Java.
 class FileDescriptorTable {
 	List<Handle> handles;
 	int next;
@@ -14,6 +14,8 @@ class FileDescriptorTable {
 		next = 0;
 	}
 
+	// Assign the lowest-numbered file descriptor not currently in use to the
+	// handle.
 	int add(Handle handle) {
 		int fd = next;
 		handles.add(fd, handle);

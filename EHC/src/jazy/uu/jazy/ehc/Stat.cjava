@@ -3,8 +3,8 @@ package uu.jazy.ehc;
 
 import java.io.*;
 
-// Information on file status.
-// Emulates the 'struct stat' structure returned by fstat(2).
+// Information on file status. Emulates the 'struct stat' structure returned by
+// fstat(2).
 class Stat {
 
 	long size;

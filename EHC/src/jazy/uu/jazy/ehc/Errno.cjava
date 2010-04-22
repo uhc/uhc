@@ -1,7 +1,7 @@
 %%[(99 jazy)
 package uu.jazy.ehc;
 
-// Constants defined in errno.h.
+// Constants defined in errno.h (copied from the man page).
 class Errno {
 	// Argument list too long (POSIX.1)
 	static final int E2BIG = 1;

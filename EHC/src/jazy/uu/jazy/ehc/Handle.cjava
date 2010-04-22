@@ -7,7 +7,7 @@ import java.io.* ;
 import uu.jazy.core.* ;
 
 /**
- * Base class for Handle, an Either around InputStream and OutputStream
+ * A handle for an open file.
  */
 public class Handle
 {
@@ -18,9 +18,10 @@ public class Handle
     public InputStream in = null ;
     public OutputStream out = null ;
 
-	public Handle( InputStream i, OutputStream o ) {
+	public Handle( InputStream i, OutputStream o, File f ) {
 		in = i;
 		out = o;
+		file = f;
 	}
     
     public Handle( InputStream i ) {

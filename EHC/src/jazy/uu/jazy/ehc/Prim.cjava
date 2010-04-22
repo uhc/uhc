@@ -916,6 +916,10 @@ PRIM GB_NodePtr gb_primOpenFileOrStd( GB_NodePtr nmNd, GB_Word modeEnum, GB_Node
     	return RTS.Unit;
 	}
 
+	public static char primIndexWord8Array(byte[] array, int index) {
+		return (char)array[index];
+	}
+
 	// return the pointer to the array
 	public static int primByteArrayContents(byte[] array) {
 		return pointers.getPointer(array);
@@ -954,6 +958,34 @@ PRIM GB_NodePtr gb_primOpenFileOrStd( GB_NodePtr nmNd, GB_Word modeEnum, GB_Node
 			return ioReturn(new Integer(-1));
 		}
 		return ioReturn(new Integer(count));
+	}
+
+	// read from a file descriptor
+	public static Object read(int fd, int buf, int count) {
+		// look up fd
+		Handle handle = fileDescriptorTable.getHandle(fd);
+		if (handle == null || handle.in == null) {
+			errno = Errno.EBADF;
+			return ioReturn(-1);
+		}
+		InputStream in = handle.in;
+
+		// look up buf
+		byte[] array = (byte[])pointers.dereference(buf);
+
+		int bytesRead = 0;
+		try {
+			bytesRead = in.read(array, 0, count);
+		} catch (IOException e) {
+			e.printStackTrace(System.out);
+			errno = Errno.EIO;
+			return ioReturn(new Integer(-1));
+		}
+
+		if (bytesRead == -1)
+			bytesRead = 0; // end of file
+
+		return ioReturn(new Integer(bytesRead));
 	}
 
 	public static Object _getErrno() {
@@ -1030,8 +1062,7 @@ PRIM GB_NodePtr gb_primOpenFileOrStd( GB_NodePtr nmNd, GB_Word modeEnum, GB_Node
 		}
 
 		// add entry to the FileDescriptorTable
-		Handle handle = new Handle(in, out);
-		handle.file = file;
+		Handle handle = new Handle(in, out, file);
 		int fd = fileDescriptorTable.add(handle);
 
 		return ioReturn(new Integer(fd));

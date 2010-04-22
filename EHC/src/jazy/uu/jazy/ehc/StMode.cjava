@@ -1,7 +1,7 @@
 %%[(99 jazy)
 package uu.jazy.ehc;
 
-// Flags for the st_mode field of the stat structure.
+// Flags for the st_mode field of the stat structure (copied from the man page).
 class StMode {
 	static int S_IFMT   = 0170000; // bit mask for the file type bit fields
 	static int S_IFSOCK = 0140000; // socket
