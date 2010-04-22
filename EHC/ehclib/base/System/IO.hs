@@ -158,7 +158,6 @@ module System.IO (
     openTempFile,
     openBinaryTempFile,
   ) where
-import Debug.Trace --[DEBUG]
 
 #ifndef __NHC__
 import Data.Bits
@@ -183,14 +182,13 @@ import GHC.Show
 
 #endif
 
--- [###] Added
 #ifdef __UHC__
 import UHC.Base
 import UHC.IOBase
 import UHC.Handle
 import UHC.IO
-import UHC.OldException (bracket, onException) -- [###] It is ok to use OldException?
-import System.IO.Unsafe (unsafeInterleaveIO) -- [###] Added unsafe import. In GHC this is defined and imported in/from GHC.IOBase
+import UHC.OldException (bracket, onException)
+import System.IO.Unsafe (unsafeInterleaveIO)
 #endif
 
 #ifdef __HUGS__
@@ -246,7 +244,6 @@ import NHC.FFI (Ptr)
 
 -- -----------------------------------------------------------------------------
 -- Standard IO
--- [###] added __UHC
 #if  defined(__GLASGOW_HASKELL__) || defined(__UHC__)
 -- | Write a character to the standard output device
 -- (same as 'hPutChar' 'stdout').
@@ -258,14 +255,13 @@ putChar c       =  hPutChar stdout c
 -- (same as 'hPutStr' 'stdout').
 
 putStr          :: String -> IO ()
-putStr s        =  hPutStr stdout s   >> hFlush stdout --- [@@@] probably a bug with flushing sdout
+putStr s        =  hPutStr stdout s
 
 -- | The same as 'putStr', but adds a newline character.
 
 putStrLn        :: String -> IO ()
 putStrLn s      =  do putStr s
                       putChar '\n'
-                      hFlush stdout  --- [@@@] probably a bug with flushing stdout -> discuss with Atze
 
 -- | The 'print' function outputs a value of any printable type to the
 -- standard output device.
@@ -401,7 +397,6 @@ withBinaryFile name mode = bracket (openBinaryFile name mode) hClose
 -- ---------------------------------------------------------------------------
 -- fixIO
 
--- [###] added (__UHC__)
 #if defined(__GLASGOW_HASKELL__) || defined(__HUGS__) || defined(__UHC__)
 fixIO :: (a -> IO a) -> IO a
 fixIO k = do

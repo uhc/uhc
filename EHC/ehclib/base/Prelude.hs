@@ -26,7 +26,6 @@ module Prelude
   , module UHC.Show
   , module UHC.Read
   , module UHC.Run
---  , module UHC.Handle
   , module System.IO
   , module UHC.IOBase
   )
@@ -46,17 +45,11 @@ import UHC.Bounded
 import UHC.Ix
 import UHC.Show
 import UHC.Read
--- [###] Only this function are actualy exported by GHC prelude. Handle is not exported in the GHC Predude; is uhc design to export it?
 import UHC.IOBase ( IOError, ioError, userError, catch, unsafePerformIO )
--- import UHC.Handle -- hiding ( hPutStrLn )
 import UHC.Run
 
-import UHC.TestX -- [@@@] for testing purpose
-
--- [###] The IO function exported by  GHC prelude are from System.IO
--- [@@@] Check what prelude export
 import System.IO
-{-  ( IO,
+  ( IO, IOMode(..),
     -- *** Output functions
     putChar,
     putStr, putStrLn, print,
@@ -66,6 +59,8 @@ import System.IO
     -- *** Files
     FilePath,
     readFile, writeFile, appendFile, readIO, readLn,
-    openFile
+    openFile,
+    hClose, hGetLine, hPutStrLn, hPutStr, hPutChar, hFlush,
+    stdout, stdin, stderr
   )
--}
+

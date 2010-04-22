@@ -37,7 +37,7 @@ import Data.Typeable
 #endif
 
 #ifdef __UHC__
-import UHC.Base -- [###] Added all bellow
+import UHC.Base
 import UHC.Show
 import UHC.Read
 #endif

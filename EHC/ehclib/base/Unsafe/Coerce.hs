@@ -26,9 +26,8 @@
 --     types with the same range (e.g. Int, Int32, Char, Word32),
 --     or between a newtype and the type that it wraps.
 
---- [@@@] useless module for UHC?
 module Unsafe.Coerce {-(unsafeCoerce)-} where
-{- [@@@] Prim notation. Investigate.
+{-
 #if defined(__GLASGOW_HASKELL__)
 import GHC.Prim (unsafeCoerce#)
 unsafeCoerce :: a -> b

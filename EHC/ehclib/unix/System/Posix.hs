@@ -1,4 +1,3 @@
---- [###] Added and commented unnecessary stuff.
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  System.Posix
@@ -13,6 +12,7 @@
 --
 -----------------------------------------------------------------------------
 
+{-- Currently uhc supports only Directory and Files. More to come in the future. --}
 module System.Posix (
 {-  module System.Posix.Types,
   module System.Posix.Signals,

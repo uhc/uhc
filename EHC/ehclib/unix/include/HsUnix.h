@@ -10,7 +10,7 @@
 #define HSUNIX_H
 
 #include "HsUnixConfig.h"
-// #include "HsFFI.h" [###] commented
+#include "HsFFI.h"
 
 /* ultra-evil... */
 #undef PACKAGE_BUGREPORT
@@ -93,15 +93,8 @@
 
 extern char **environ;
 
-// [@@@] shouldn't __GNUC__ to be set from outside? Otherwise will cause linking problems :: multiple definition of first defined here; at leas with gnu compilers
-// [@@@] Moreover, for some particular resons this pattern of including headers does not work (http://www.greenend.org.uk/rjk/2003/03/inline.html). Thus I define INLINE as static inline.
 #ifndef INLINE
 #define INLINE static inline
-// # if defined(__GNUC__)
-//#  define INLINE extern inline
-//# else
-//#  define INLINE inline
-//# endif
 #endif
 
 INLINE int __hsunix_wifexited   (int stat) { return WIFEXITED(stat); }
@@ -208,7 +201,6 @@ INLINE int __hsunix_unsetenv(const char *name)
  * (PATH_MAX is not defined on systems with unlimited path length,
  * e.g. the Hurd).
  */
-// [###] Modified the return type from HsInt to int
 INLINE int __hsunix_long_path_size() {
 #ifdef PATH_MAX
     return PATH_MAX;

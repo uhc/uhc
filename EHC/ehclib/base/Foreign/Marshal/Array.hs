@@ -79,7 +79,6 @@ import Control.Monad (zipWithM_)
 #endif
 
 #ifdef __UHC__
--- [###] added
 import UHC.IOBase
 import UHC.Base
 #endif

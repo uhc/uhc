@@ -16,6 +16,7 @@ main = do
   print time
   print $ f ([1..1000] :: [Int])
   time' <- getCPUTime
+  print time'
   print (time' >= time)
   
 f :: [Int] -> Int

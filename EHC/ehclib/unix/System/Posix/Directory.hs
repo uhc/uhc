@@ -138,23 +138,24 @@ changeWorkingDirectoryFd (Fd fd) =
   throwErrnoIfMinus1_ "changeWorkingDirectoryFd" (c_fchdir fd)
 
 
-foreign import ccall unsafe "HsUnix.h seekdir" -- [###] added HsUnix.h
+foreign import ccall unsafe "HsUnix.h seekdir"
   c_seekdir :: Ptr CDir -> COff -> IO ()
 
-foreign import ccall unsafe "HsUnix.h telldir" -- [###] added HsUnix.h
+foreign import ccall unsafe "HsUnix.h telldir"
   c_telldir :: Ptr CDir -> IO COff
 
-foreign import ccall unsafe "HsUnix.h getcwd" -- [###] added HsUnix.h
+foreign import ccall unsafe "HsUnix.h getcwd"
    c_getcwd   :: Ptr CChar -> CSize -> IO (Ptr CChar)
 
-foreign import ccall unsafe "HsUnix.h __hsunix_long_path_size" -- [###] added HsUnix.h
+foreign import ccall unsafe "HsUnix.h __hsunix_long_path_size"
   long_path_size :: Int
 
-foreign import ccall unsafe "HsUnix.h chdir" -- [###] added HsUnix.h
+foreign import ccall unsafe "HsUnix.h chdir"
    c_chdir :: CString -> IO CInt
 
-foreign import ccall unsafe "HsUnix.h rmdir" -- [###] added HsUnix.h
+foreign import ccall unsafe "HsUnix.h rmdir"
    c_rmdir :: CString -> IO CInt
 
-foreign import ccall unsafe "HsUnix.h fchdir"  -- [###] added HsUnix.h
+foreign import ccall unsafe "HsUnix.h fchdir"
   c_fchdir :: CInt -> IO CInt 
+

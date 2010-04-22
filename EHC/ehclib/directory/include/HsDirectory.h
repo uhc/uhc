@@ -62,7 +62,6 @@ extern int __hscore_getFolderPath(HWND hwndOwner,
  * e.g. the Hurd).
  */
 
-/* [###] modified to return int and not HsInt*/
 INLINE int __hscore_long_path_size() {
 #ifdef PATH_MAX
     return PATH_MAX;
@@ -71,7 +70,6 @@ INLINE int __hscore_long_path_size() {
 #endif
 }
 
-// [###] modified to include UHC
 #if defined(__GLASGOW_HASKELL__) || defined(__UHC__)
 INLINE int __hscore_R_OK() { return R_OK; }
 INLINE int __hscore_W_OK() { return W_OK; }

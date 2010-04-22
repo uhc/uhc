@@ -27,9 +27,6 @@
 --     MODULE_NAME = Posix | Windows
 --     IS_WINDOWS  = False | True
 
--- #define IS_WINDOWS      True
-
--- [@@@] redefined here until I figured out how to exclude this module
 #if defined(mingw32_HOST_OS) || defined(__MINGW32__)
 #define IS_WINDOWS True
 #else

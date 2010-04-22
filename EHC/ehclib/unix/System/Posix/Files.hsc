@@ -24,13 +24,9 @@
 --
 -----------------------------------------------------------------------------
 
-{- [###] Commented everything except removeLink and rename. Originally this is a hsc file -}
-
 module System.Posix.Files (
     -- * File modes
     -- FileMode exported by System.Posix.Types
-    
-    {-
     unionFileModes, intersectFileModes,
     nullFileMode,
     ownerReadMode, ownerWriteMode, ownerExecuteMode, ownerModes,
@@ -64,13 +60,13 @@ module System.Posix.Files (
     createDevice,
 
     -- * Hard links
-    createLink,-} removeLink,
-{-
+    createLink, removeLink,
+
     -- * Symbolic links
     createSymbolicLink, readSymbolicLink,
--}
+
     -- * Renaming files
-    rename {-,
+    rename,
 
     -- * Changing file ownership
     setOwnerAndGroup,  setFdOwnerAndGroup,
@@ -85,21 +81,19 @@ module System.Posix.Files (
     setFileSize, setFdSize,
 
     -- * Find system-specific limits for a file
-    PathVar(..), getPathVar, getFdPathVar, -}
+    PathVar(..), getPathVar, getFdPathVar,
   ) where
 
--- #include "HsUnix.h"
+#include "HsUnix.h"
 
---import System.Posix.Error
---import System.Posix.Types
+import System.Posix.Error
+import System.Posix.Types
 import System.IO.Unsafe
 import Data.Bits
 import System.Posix.Internals
 import Foreign
 import Foreign.C
 
---START_COMMENT
-{-
 -- -----------------------------------------------------------------------------
 -- POSIX file modes
 
@@ -229,7 +223,7 @@ setFdMode :: Fd -> FileMode -> IO ()
 setFdMode (Fd fd) m =
   throwErrnoIfMinus1_ "setFdMode" (c_fchmod fd m)
 
-foreign import ccall unsafe "fchmod" 
+foreign import ccall unsafe "HsUnix.h fchmod" 
   c_fchmod :: CInt -> CMode -> IO CInt
 
 -- | @setFileCreationMask mode@ sets the file mode creation mask to @mode@.
@@ -403,7 +397,7 @@ getSymbolicLinkStatus path = do
       throwErrnoPathIfMinus1_ "getSymbolicLinkStatus" path (c_lstat s p)
   return (FileStatus fp)
 
-foreign import ccall unsafe "__hsunix_lstat" 
+foreign import ccall unsafe "HsUnix.h __hsunix_lstat" 
   c_lstat :: CString -> Ptr CStat -> IO CInt
 
 -- | @createNamedPipe fifo mode@  
@@ -431,7 +425,7 @@ createDevice path mode dev =
   withCString path $ \s ->
     throwErrnoPathIfMinus1_ "createDevice" path (c_mknod s mode dev)
 
-foreign import ccall unsafe "__hsunix_mknod" 
+foreign import ccall unsafe "HsUnix.h __hsunix_mknod" 
   c_mknod :: CString -> CMode -> CDev -> IO CInt
 
 -- -----------------------------------------------------------------------------
@@ -447,19 +441,13 @@ createLink name1 name2 =
   withCString name2 $ \s2 ->
   throwErrnoPathIfMinus1_ "createLink" name1 (c_link s1 s2)
 
--}
--- END_COMMENT
-
 -- | @removeLink path@ removes the link named @path@.
 --
 -- Note: calls @unlink@.
 removeLink :: FilePath -> IO ()
 removeLink name =
   withCString name $ \s ->
-  throwErrnoPathIfMinus1_ "HsUnix.h removeLink" name (c_unlink s) -- [###] added HsUnix.h
-
--- START_COMMENT
-{-
+  throwErrnoPathIfMinus1_ "removeLink" name (c_unlink s)
 
 -- -----------------------------------------------------------------------------
 -- Symbolic Links
@@ -477,7 +465,7 @@ createSymbolicLink file1 file2 =
   withCString file2 $ \s2 ->
   throwErrnoPathIfMinus1_ "createSymbolicLink" file1 (c_symlink s1 s2)
 
-foreign import ccall unsafe "symlink"
+foreign import ccall unsafe "HsUnix.h symlink"
   c_symlink :: CString -> CString -> IO CInt
 
 -- ToDo: should really use SYMLINK_MAX, but not everyone supports it yet,
@@ -502,8 +490,7 @@ readSymbolicLink file =
 
 foreign import ccall unsafe "HsUnix.h readlink"
   c_readlink :: CString -> CString -> CSize -> IO CInt
--}
---END_COMMENT
+
 -- -----------------------------------------------------------------------------
 -- Renaming files
 
@@ -516,10 +503,9 @@ rename name1 name2 =
   withCString name2 $ \s2 ->
   throwErrnoPathIfMinus1_ "rename" name1 (c_rename s1 s2)
 
-foreign import ccall unsafe "HsUnix.h rename"  -- [###] added HsUnix.h
+foreign import ccall unsafe "HsUnix.h rename"
    c_rename :: CString -> CString -> IO CInt
---START_COMMENT
-{-
+
 -- -----------------------------------------------------------------------------
 -- chown()
 
@@ -534,7 +520,7 @@ setOwnerAndGroup name uid gid = do
   withCString name $ \s ->
     throwErrnoPathIfMinus1_ "setOwnerAndGroup" name (c_chown s uid gid)
 
-foreign import ccall unsafe "chown"
+foreign import ccall unsafe "HsUnix.h chown"
   c_chown :: CString -> CUid -> CGid -> IO CInt
 
 -- | Acts as 'setOwnerAndGroup' but uses a file descriptor instead of a
@@ -545,7 +531,7 @@ setFdOwnerAndGroup :: Fd -> UserID -> GroupID -> IO ()
 setFdOwnerAndGroup (Fd fd) uid gid = 
   throwErrnoIfMinus1_ "setFdOwnerAndGroup" (c_fchown fd uid gid)
 
-foreign import ccall unsafe "fchown"
+foreign import ccall unsafe "HsUnix.h fchown"
   c_fchown :: CInt -> CUid -> CGid -> IO CInt
 
 #if HAVE_LCHOWN
@@ -559,7 +545,7 @@ setSymbolicLinkOwnerAndGroup name uid gid = do
     throwErrnoPathIfMinus1_ "setSymbolicLinkOwnerAndGroup" name
 	(c_lchown s uid gid)
 
-foreign import ccall unsafe "lchown"
+foreign import ccall unsafe "HsUnix.h lchown"
   c_lchown :: CString -> CUid -> CGid -> IO CInt
 #endif
 
@@ -599,7 +585,7 @@ setFileSize file off =
   withCString file $ \s ->
     throwErrnoPathIfMinus1_ "setFileSize" file (c_truncate s off)
 
-foreign import ccall unsafe "truncate"
+foreign import ccall unsafe "HsUnix.h truncate"
   c_truncate :: CString -> COff -> IO CInt
 
 -- | Acts as 'setFileSize' but uses a file descriptor instead of a 'FilePath'.
@@ -690,7 +676,7 @@ getPathVar name v = do
     throwErrnoPathIfMinus1 "getPathVar" name $ 
       c_pathconf nameP (pathVarConst v)
 
-foreign import ccall unsafe "pathconf" 
+foreign import ccall unsafe "HsUnix.h pathconf" 
   c_pathconf :: CString -> CInt -> IO CLong
 
 
@@ -706,8 +692,5 @@ getFdPathVar (Fd fd) v =
     throwErrnoIfMinus1 "getFdPathVar" $ 
       c_fpathconf fd (pathVarConst v)
 
-foreign import ccall unsafe "fpathconf" 
+foreign import ccall unsafe "HsUnix.h fpathconf" 
   c_fpathconf :: CInt -> CInt -> IO CLong
-
--}
---END_COMMENT

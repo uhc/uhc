@@ -26,8 +26,6 @@ module System.Locale (
     )
 where
 
---import Prelude --- [###]Useless Prelude?
-
 data TimeLocale = TimeLocale {
 	-- |full and abbreviated week days
         wDays  :: [(String, String)],

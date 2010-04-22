@@ -94,7 +94,7 @@ import Hugs.Ptr
 
 #ifdef __UHC__
 import UHC.Ptr
-import UHC.IOBase -- [###] added all bellow. Test if we can remove some
+import UHC.IOBase
 import UHC.Base
 import UHC.Read
 import UHC.Real

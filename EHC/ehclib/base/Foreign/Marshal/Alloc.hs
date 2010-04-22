@@ -54,7 +54,7 @@ import IO                       ( bracket )
 import Foreign.ForeignPtr       ( FinalizerPtr )
 import UHC.IOBase
 import UHC.OldException         ( bracket )
-import UHC.Real -- [###] added
+import UHC.Real
 import UHC.Base
 import UHC.Ptr
 #else
@@ -116,7 +116,6 @@ alloca  = doAlloca undefined
 -- exception), so the pointer passed to @f@ must /not/ be used after this.
 --
 
--- [@@@] removed prim constructs and adapted GHC definition to work for UHC
 #if defined (__GLASGOW_HASKELL__) || defined(__UHC___)
 allocaBytes :: Int -> (Ptr a -> IO b) -> IO b
 allocaBytes size action = IO $ \ s0 ->

@@ -61,7 +61,7 @@ import Hugs.Bits
 #include "IntLikeInstance.h"
 
 import UHC.Bits
-import UHC.Real -- [###] Added all bellow
+import UHC.Real
 import UHC.Base
 #endif
 

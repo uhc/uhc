@@ -60,7 +60,6 @@ import GHC.Num
 import GHC.Base
 #endif
 
--- [###] Added
 #ifdef __UHC__
 import UHC.IOBase
 import UHC.Base

@@ -512,7 +512,7 @@ data IOErrorType        -- alphabetical order of constructors required, assumed 
   | IllegalOperation    -- 5
   | InappropriateType   -- 6
   | InvalidArgument     -- 7
-  | Interrupted         -- 8 [###] added Interrupted
+  | Interrupted         -- 8
   | NoSuchThing			    -- 9
   | OtherError    		  -- 10
   | PermissionDenied    -- 11
@@ -532,7 +532,7 @@ instance Show IOErrorType where
       IllegalOperation      -> "illegal operation"
       InappropriateType     -> "inappropriate type"
       InvalidArgument       -> "invalid argument"
-      Interrupted           -> "interrupted" -- [###] added
+      Interrupted           -> "interrupted"
       NoSuchThing           -> "does not exist"
       OtherError            -> "other error"
       PermissionDenied      -> "permission denied"

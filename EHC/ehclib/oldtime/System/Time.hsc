@@ -1,11 +1,9 @@
--- [###] Overall: change foreign calls to direct to HsTime.h instead of time.h
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
 -- XXX with some combinations of #defines we get warnings, e.g.
 -- Warning: Defined but not used: `throwAwayReturnPointer'
 
 -----------------------------------------------------------------------------
 -- |
--- Module      :  System.Time
 -- Copyright   :  (c) The University of Glasgow 2001
 -- License     :  BSD-style (see the file libraries/old-time/LICENSE)
 -- 
@@ -142,14 +140,14 @@ data Month
  = January   | February | March    | April
  | May       | June     | July     | August
  | September | October  | November | December
- deriving (Eq, Ord, Enum, Bounded, {-Ix,-} Read, Show) --[###] Ix not supported
+ deriving (Eq, Ord, Enum, Bounded, Ix, Read, Show)
 
 -- | A day of the week.
 
 data Day 
  = Sunday   | Monday | Tuesday | Wednesday
  | Thursday | Friday | Saturday
- deriving (Eq, Ord, Enum, Bounded, {-Ix,-} Read, Show) --[###] Ix not supported
+ deriving (Eq, Ord, Enum, Bounded, Ix, Read, Show)
 
 -- | A representation of the internal clock time.
 -- Clock times may be compared, converted to strings, or converted to an
@@ -231,8 +229,6 @@ data TimeDiff
 noTimeDiff :: TimeDiff
 noTimeDiff = TimeDiff 0 0 0 0 0 0 0
 
--- | returns the current time in its internal representation.
--- [###] extracted as local defintion
 -- Converts a real to an integer by rounding it.
 realToInteger :: Real a => a -> Integer 
 realToInteger x = round (realToFrac x :: Double)
@@ -287,7 +283,7 @@ addToClockTime (TimeDiff year mon day hour minute sec psec)
           new_mon  = fromEnum (ctMonth cal) + r_mon 
 	  month' = fst tmp
 	  yr_diff = snd tmp
-          tmp :: (Month, Int) -- [###] added type
+          tmp :: (Month, Int)
           tmp
 	    | new_mon < 0  = (toEnum (12 + new_mon), (-1))
 	    | new_mon > 11 = (toEnum (new_mon `mod` 12), 1)
@@ -370,7 +366,7 @@ gmtoff x    = (#peek struct tm,tm_gmtoff) x
 #   define tzname _tzname
 #  endif
 #  ifndef mingw32_HOST_OS
-foreign import ccall unsafe "HsTime.h &tzname" tzname :: Ptr CString
+foreign import ccall unsafe "HsTime.h tzname_aux" tzname :: Ptr CString
 #  else
 foreign import ccall unsafe "__hscore_timezone" timezone :: Ptr CLong
 foreign import ccall unsafe "__hscore_tzname"   tzname :: Ptr CString

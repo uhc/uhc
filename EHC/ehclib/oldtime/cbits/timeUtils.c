@@ -1,4 +1,3 @@
-/* [###] imported and modified */
 #if defined(__GLASGOW_HASKELL__) || defined(__HUGS__) || defined(__UHC__)
 /* 
  * (c) The University of Glasgow 2002

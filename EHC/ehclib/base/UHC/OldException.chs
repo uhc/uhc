@@ -10,7 +10,7 @@ module UHC.OldException
 
   , throwIO
 
-  , throw -- [###] added as in Control.Base.Exception
+  , throw
   
   , catchAny
   
@@ -86,7 +86,6 @@ assert False _ = error "Assertion failed"
 %%]
 
 %%[99
--- [###] Imported from Control.Exception.Base. Adapted for UHC.
 -- Performs the final action if there was an exception raised by the computation.
 onException :: IO a -> IO b -> IO a
 onException io what = catchAny io (\e -> do what

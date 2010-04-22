@@ -32,7 +32,6 @@ import Hugs.IOExts (unsafePerformIO, unsafeInterleaveIO)
 import NHC.Internal (unsafePerformIO)
 #endif
 
--- [###] added
 #ifdef __UHC__
 import UHC.IOBase (unsafePerformIO)
 import UHC.Base (IO, return)

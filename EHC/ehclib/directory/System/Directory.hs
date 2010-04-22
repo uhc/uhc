@@ -1,4 +1,3 @@
--- [###] Module added and modified
 {-# OPTIONS_GHC -w #-}
 -- XXX We get some warnings on Windows
 
@@ -95,7 +94,6 @@ import Foreign.C
 
 {-# CFILES cbits/directory.c #-}
 
--- [###] added _UHC_ -- long ifdef
 #if defined(__GLASGOW_HASKELL__) || defined(__UHC__)
 import System.Posix.Types
 import System.Posix.Internals
@@ -108,9 +106,7 @@ import System.IO.Error hiding ( catch, try )
 #elif __UHC__
 import UHC.IOBase
 import UHC.OldException
-import System.IO.Error --hiding ( catch, try ) -- [###] use the old catch and try for the moment. Originally it uses catch and throw from Control.Exception.Base 
---throw    :: Exception e => e -> a
---throw     = unsafePerformIO . throwIO
+import System.IO.Error
 #endif
 
 #ifdef mingw32_HOST_OS
@@ -118,9 +114,6 @@ import qualified System.Win32
 #else
 import qualified System.Posix
 #endif
-
--- [@@@] Debug purposes
-import  Debug.Trace
 
 {- $intro
 A directory contains a series of entries, each of which is a named
@@ -181,7 +174,7 @@ The operation may fail with:
 getPermissions :: FilePath -> IO Permissions
 getPermissions name = do
   withCString name $ \s -> do
-#ifdef mingw32_HOST_OS
+#if defined(mingw32_HOST_OS) || defined (__CYGWIN32__)
   -- stat() does a better job of guessing the permissions on Windows
   -- than access() does.  e.g. for execute permission, it looks at the
   -- filename extension :-)
@@ -330,7 +323,7 @@ createDirectoryIfMissing create_parents path0
              | isDoesNotExistError  e && create_parents -> do
                  createDirectoryIfMissing True (dropFileName path)
                  createDirectoryIfMissing True path
-             | otherwise -> throwIO $ IOException e  -- [@@@] analyze the effects of changing this code (originally: throw e)
+             | otherwise -> throwIO $ IOException e
   where
     -- we want createDirectoryIfMissing "a/" to behave like   
     -- createDirectoryIfMissing "a".  Also, unless we apply
@@ -341,7 +334,6 @@ createDirectoryIfMissing create_parents path0
 --throw :: e -> a
 --throw = unsafePerformIO . throwIO
 
--- [###] added __UHC__ (changed from #if __GLASGOW_HASKELL__)
 #if defined(__GLASGOW_HASKELL__) || defined(__UHC__)
 {- | @'removeDirectory' dir@ removes an existing directory /dir/.  The
 implementation may specify additional constraints which must be
@@ -400,7 +392,7 @@ removeDirectory path =
 removeDirectoryRecursive :: FilePath -> IO ()
 removeDirectoryRecursive startLoc = do
   cont <- getDirectoryContents startLoc
-  sequence_ [rm (startLoc `combine` x) | x <- cont, x /= "." && x /= ".."] -- [###] replaced </> with `combine`
+  sequence_ [rm (startLoc </> x) | x <- cont, x /= "." && x /= ".."]
   removeDirectory startLoc
   where
     rm :: FilePath -> IO ()
@@ -412,7 +404,6 @@ removeDirectoryRecursive startLoc = do
                               removeDirectoryRecursive f
                 Right _ -> return ()
 
--- [###] added __UHC__ (changed from #if __GLASGOW_HASKELL__)
 #if defined(__GLASGOW_HASKELL__) || defined(__UHC__)
 {- |'removeFile' /file/ removes the directory entry for an existing file
 /file/, where /file/ is not itself a directory. The
@@ -596,7 +587,7 @@ copyFile fromFPath toFPath =
                      (\_ -> return ())
 #else
 copyFile fromFPath toFPath =
-    copy `Prelude.catch` (\exc -> throwIOError $ ioeSetLocation exc "copyFile") -- [###] modified throw to throwIOError
+    copy `Prelude.catch` (\exc -> throwIOError $ ioeSetLocation exc "copyFile")
     where copy = bracket (openBinaryFile fromFPath ReadMode) hClose $ \hFrom ->
                  bracketOnError openTmp cleanTmp $ \(tmpFPath, hTmp) ->
                  do allocaBytes bufferSize $ copyContents hFrom hTmp
@@ -622,7 +613,7 @@ copyFile fromFPath toFPath =
 
 
 #ifdef __UHC__
-{-- [###] Added bracketOnDefinition, taken from Control.Base.Exception (ghc) --}
+-- The GHC equivalent is defined in Control.Base.Exception
 -- | Like bracket, but only performs the final action if there was an
 -- exception raised by the in-between computation.
 bracketOnError
@@ -658,14 +649,14 @@ canonicalizePath fpath =
         -- normalise does more stuff, like upper-casing the drive letter
 
 #if defined(mingw32_HOST_OS)
-foreign import stdcall unsafe "GetFullPathNameA"
+foreign import stdcall unsafe "HsDirectory.h GetFullPathNameA"
             c_GetFullPathName :: CString
                               -> CInt
                               -> CString
                               -> Ptr CString
                               -> IO CInt
 #else
-foreign import ccall unsafe "realpath"
+foreign import ccall unsafe "HsDirectory.h realpath"
                    c_realpath :: CString
                               -> CString
                               -> IO CString
@@ -695,7 +686,7 @@ findExecutable binary =
               return (Just fpath)
       else return Nothing
 
-foreign import stdcall unsafe "SearchPathA"
+foreign import stdcall unsafe "HsDirectory.h SearchPathA"
             c_SearchPath :: CString
                          -> CString
                          -> CString
@@ -708,19 +699,18 @@ foreign import stdcall unsafe "SearchPathA"
   path <- getEnv "PATH"
   search (splitSearchPath path)
   where
-    fileName = binary `addExtension` exeExtension -- [###] replaced <.> with `addExtension`
+    fileName = binary <.> exeExtension
 
     search :: [FilePath] -> IO (Maybe FilePath)
     search [] = return Nothing
     search (d:ds) = do
-        let path = d `combine` fileName -- [###] replaced </> with `combine`
+        let path = d </> fileName
         b <- doesFileExist path
         if b then return (Just path)
              else search ds
 #endif
 
 
--- [###] added __UHC__ (changed from #if __GLASGOW_HASKELL__)
 #if defined(__GLASGOW_HASKELL__) || defined(__UHC__)
 {- |@'getDirectoryContents' dir@ returns a list of /all/ entries
 in /dir/. 
@@ -837,7 +827,7 @@ getCurrentDirectory = do
 #endif
 
 #ifdef mingw32_HOST_OS
-foreign import ccall unsafe "getcwd"
+foreign import ccall unsafe "HsDirectory.h getcwd"
    c_getcwd   :: Ptr CChar -> CSize -> IO (Ptr CChar)
 #endif
 
@@ -887,16 +877,15 @@ exists and is a directory, and 'False' otherwise.
 
 doesDirectoryExist :: FilePath -> IO Bool
 doesDirectoryExist name =
-   (withFileStatus "doesDirectoryExist" name $ \st -> {-trace ("isDir" ++ show st-} isDirectory st) -- [DEBUG
-   `catch` ((\ _ -> {-trace ("err: " ++ show e)-} return False) :: IOException -> IO Bool) -- [DEBUG]
+   (withFileStatus "doesDirectoryExist" name $ \st -> isDirectory st)
+   `catch` ((\ _ -> return False) :: IOException -> IO Bool)
 
 {- |The operation 'doesFileExist' returns 'True'
 if the argument file exists and is not a directory, and 'False' otherwise.
 -}
---[DEBUG]
 doesFileExist :: FilePath -> IO Bool
 doesFileExist name =
-   (withFileStatus "doesFileExist" name $ \st -> do b <- isDirectory st; {-trace ("doesFileExist " ++ name ++ " -> " ++ show st)-} return (not b))
+   (withFileStatus "doesFileExist" name $ \st -> do b <- isDirectory st; return (not b))
    `catch` ((\ _ -> return False) :: IOException -> IO Bool)
 
 {- |The 'getModificationTime' operation returns the
@@ -916,25 +905,14 @@ getModificationTime name =
  withFileStatus "getModificationTime" name $ \ st ->
  modificationTime st
 
---[DEBUG]
 withFileStatus :: String -> FilePath -> (Ptr CStat -> IO a) -> IO a
 withFileStatus loc name f = do
-  --trace ("withFileStatus " ++ loc ++ " " ++ name)  i
   modifyIOError (`ioeSetFileName` name) $
     allocaBytes sizeof_stat $ \p ->
       withCString (fileNameEndClean name) $ \s -> do
         x <- c_stat s p
-        --y <- test maxBound x
-        --traceShow (maxBound :: CInt) return ()
-        --traceShow y return ()
-        --trace ("With c_stat " ++ show x ++ " " ++ show (x == -1) ++ show (x < 0) ++ show (x == 0) ++ show (x > 0) )   
         throwErrnoIfMinus1Retry_ loc (c_stat s p)
 	f p
-
-test :: CInt -> CInt -> IO ()
-test i x | x == i = trace ("TEST: " ++ show x ++ " == " ++ show i) return ()
-         | i == 0 = return ()
-         | otherwise = test (i - 1) x
 
 withFileOrSymlinkStatus :: String -> FilePath -> (Ptr CStat -> IO a) -> IO a
 withFileOrSymlinkStatus loc name f = do
@@ -947,7 +925,7 @@ withFileOrSymlinkStatus loc name f = do
 modificationTime :: Ptr CStat -> IO ClockTime
 modificationTime stat = do
     mtime <- st_mtime stat
-    let realToInteger x = round $ (realToFrac x :: Double) -- [###] added explicit type
+    let realToInteger x = round $ (realToFrac x :: Double)
     return (TOD (realToInteger (mtime :: CTime)) 0)
     
 isDirectory :: Ptr CStat -> IO Bool
@@ -959,18 +937,18 @@ fileNameEndClean :: String -> String
 fileNameEndClean name = if isDrive name then addTrailingPathSeparator name
                                         else dropTrailingPathSeparator name
 
-foreign import ccall unsafe "HsDirectory.h __hscore_R_OK" r_OK :: CInt -- [###] added HsDirectory.h; which it seems that is automatically available for all other foreign imports.
-foreign import ccall unsafe "__hscore_W_OK" w_OK :: CInt
-foreign import ccall unsafe "__hscore_X_OK" x_OK :: CInt
+foreign import ccall unsafe "HsDirectory.h __hscore_R_OK" r_OK :: CInt
+foreign import ccall unsafe "HsDirectory.h __hscore_W_OK" w_OK :: CInt
+foreign import ccall unsafe "HsDirectory.h __hscore_X_OK" x_OK :: CInt
 
-foreign import ccall unsafe "__hscore_S_IRUSR" s_IRUSR :: CMode
-foreign import ccall unsafe "__hscore_S_IWUSR" s_IWUSR :: CMode
-foreign import ccall unsafe "__hscore_S_IXUSR" s_IXUSR :: CMode
-#ifdef mingw32_HOST_OS
-foreign import ccall unsafe "__hscore_S_IFDIR" s_IFDIR :: CMode
+foreign import ccall unsafe "HsDirectory.h __hscore_S_IRUSR" s_IRUSR :: CMode
+foreign import ccall unsafe "HsDirectory.h __hscore_S_IWUSR" s_IWUSR :: CMode
+foreign import ccall unsafe "HsDirectory.h __hscore_S_IXUSR" s_IXUSR :: CMode
+#if defined(mingw32_HOST_OS) || defined(__CYGWIN32__)
+foreign import ccall unsafe "HsDirectory.h __hscore_S_IFDIR" s_IFDIR :: CMode
 #endif
 
-foreign import ccall unsafe "__hscore_long_path_size"
+foreign import ccall unsafe "HsDirectory.h __hscore_long_path_size"
   long_path_size :: Int
 
 #else
@@ -1123,26 +1101,26 @@ getTemporaryDirectory = do
   getEnv "TMPDIR"
 #if !__NHC__
     `Prelude.catch` \e -> if isDoesNotExistError e then return "/tmp"
-                          else throw $ IOException e -- [@@@] analyze the impact of changing this code from throw e 
+                          else throw $ IOException e
 #else
     `Prelude.catch` (\ex -> return "/tmp")
 #endif
 #endif
 
 #if defined(mingw32_HOST_OS)
-foreign import ccall unsafe "__hscore_getFolderPath"
+foreign import ccall unsafe "HsDirectory.h __hscore_getFolderPath"
             c_SHGetFolderPath :: Ptr () 
                               -> CInt 
                               -> Ptr () 
                               -> CInt 
                               -> CString 
                               -> IO CInt
-foreign import ccall unsafe "__hscore_CSIDL_PROFILE"  csidl_PROFILE  :: CInt
-foreign import ccall unsafe "__hscore_CSIDL_APPDATA"  csidl_APPDATA  :: CInt
-foreign import ccall unsafe "__hscore_CSIDL_WINDOWS"  csidl_WINDOWS  :: CInt
-foreign import ccall unsafe "__hscore_CSIDL_PERSONAL" csidl_PERSONAL :: CInt
+foreign import ccall unsafe "HsDirectory.h __hscore_CSIDL_PROFILE"  csidl_PROFILE  :: CInt
+foreign import ccall unsafe "HsDirectory.h __hscore_CSIDL_APPDATA"  csidl_APPDATA  :: CInt
+foreign import ccall unsafe "HsDirectory.h __hscore_CSIDL_WINDOWS"  csidl_WINDOWS  :: CInt
+foreign import ccall unsafe "HsDirectory.h __hscore_CSIDL_PERSONAL" csidl_PERSONAL :: CInt
 
-foreign import stdcall unsafe "GetTempPathA" c_GetTempPath :: CInt -> CString -> IO CInt
+foreign import stdcall unsafe "HsDirectory.h GetTempPathA" c_GetTempPath :: CInt -> CString -> IO CInt
 
 raiseUnsupported :: String -> IO ()
 raiseUnsupported loc = 

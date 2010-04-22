@@ -1,4 +1,3 @@
--- [###] Added Module System.FilePath with all its dependecies. Just copied, thus this can be imported from the configuration file.
 {-# LANGUAGE CPP #-}
 {- |
 Module      :  System.FilePath

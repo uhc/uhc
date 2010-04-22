@@ -29,7 +29,6 @@ import Hugs.Time ( getCPUTime, clockTicks )
 import CPUTime ( getCPUTime, cpuTimePrecision )
 #endif
 
--- [###] added UHC
 #if defined(__GLASGOW_HASKELL__) || defined(__UHC__)
 import Foreign
 import Foreign.C
@@ -37,7 +36,6 @@ import Foreign.C
 #include "HsBase.h"
 #endif
 
--- [###] extracted as local defintion
 -- Converts a real to an integer by rounding it.
 realToInteger :: Real a => a -> Integer 
 realToInteger x = round (realToFrac x :: Double)
@@ -139,7 +137,6 @@ cpuTimePrecision :: Integer
 cpuTimePrecision = round ((1000000000000::Integer) % fromIntegral (clockTicks))
 #endif
 
--- [###] added UHC
 #if defined(__GLASGOW_HASKELL__) || defined(__UHC__)
 clockTicks :: Int
 clockTicks =

@@ -278,11 +278,11 @@ instance Random Bool where
       case (randomIvalInteger (toInteger (bool2Int a), toInteger (bool2Int b)) g) of
         (x, g') -> (int2Bool x, g')
        where
-         bool2Int :: Bool -> Int -- [###] added signature
+         bool2Int :: Bool -> Int
          bool2Int False = 0 :: Int
          bool2Int True  = 1 :: Int
 
-         int2Bool :: Int -> Bool -- [###] added signature
+         int2Bool :: Int -> Bool
          int2Bool 0	= False
          int2Bool _	= True
 

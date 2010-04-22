@@ -210,7 +210,6 @@ castCharToCChar ch = fromIntegral (ord ch)
 -- | Marshal a NUL terminated C string into a Haskell string.
 --
 peekCAString    :: CString -> IO String
---[###] added UHC case
 #if !defined(__GLASGOW_HASKELL__) && !defined(__UHC__)
 peekCAString cp  = do
   cs <- peekArray0 nUL cp
@@ -229,7 +228,6 @@ peekCAString cp = do
 -- | Marshal a C string with explicit length into a Haskell string.
 --
 peekCAStringLen           :: CStringLen -> IO String
---[###] added UHC case
 #if !defined(__GLASGOW_HASKELL__) && !defined(__UHC__)
 peekCAStringLen (cp, len)  = do
   cs <- peekArray len cp
@@ -257,7 +255,6 @@ peekCAStringLen (cp, len)
 --   'Foreign.Marshal.Alloc.finalizerFree'.
 --
 newCAString :: String -> IO CString
---[###] added UHC case
 #if !defined(__GLASGOW_HASKELL__) && !defined(__UHC__)
 newCAString  = newArray0 nUL . charsToCChars
 #else
@@ -278,7 +275,6 @@ newCAString str = do
 --   'Foreign.Marshal.Alloc.finalizerFree'.
 --
 newCAStringLen     :: String -> IO CStringLen
---[###] added UHC case
 #if !defined(__GLASGOW_HASKELL__) && !defined(__UHC__)
 newCAStringLen str  = do
   a <- newArray (charsToCChars str)
@@ -305,7 +301,6 @@ newCAStringLen str = do
 --   storage must /not/ be used after this.
 --
 withCAString :: String -> (CString -> IO a) -> IO a
--- [###] added UHC case
 #if !defined(__GLASGOW_HASKELL__) && !defined(__UHC__)
 withCAString  = withArray0 nUL . charsToCChars
 #else
@@ -327,7 +322,6 @@ withCAString str f =
 --   storage must /not/ be used after this.
 --
 withCAStringLen         :: String -> (CStringLen -> IO a) -> IO a
---[###] added UHC case
 #if !defined(__GLASGOW_HASKELL__) && !defined(__UHC__)
 withCAStringLen str act  = withArray (charsToCChars str) $ act . pairLength str
 #else
@@ -356,7 +350,6 @@ nUL  = 0
 pairLength :: String -> a -> (a, Int)
 pairLength  = flip (,) . length
 
---[###] added UHC case
 #if !defined(__GLASGOW_HASKELL__) && !defined(__UHC__)
 -- cast [CChar] to [Char]
 --

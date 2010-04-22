@@ -222,7 +222,6 @@ import GHC.List
 import GHC.Base
 #endif
 
---[###] Added
 #ifdef __UHC__
 import UHC.Real
 import UHC.Base

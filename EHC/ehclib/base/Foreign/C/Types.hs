@@ -95,14 +95,13 @@ import Hugs.Ptr         ( castPtr )
 #ifdef __UHC__
 import UHC.Ptr
 import UHC.Types
-import UHC.Base -- [###] Added
+import UHC.Base
 import UHC.Float
 import UHC.Enum
 import UHC.Real
 import UHC.Show
 import UHC.Read
 #endif
-import Debug.Trace --[DEBUG]
 #include "HsBaseConfig.h"
 #include "CTypes.h"
 
@@ -150,16 +149,8 @@ INTEGRAL_TYPE(CUShort,tyConCUShort,"CUShort",HTYPE_UNSIGNED_SHORT)
 #ifdef __UHC__
 ARITHMETIC_TYPE_INSTANCES(CInt,tyConCInt,"CInt",HTYPE_INT)
 INTEGRAL_TYPE_INSTANCES(CInt,tyConCInt,"CInt",HTYPE_INT)
---INSTANCE_EQ(CInt)
---INSTANCE_ORD(CInt)
---[DEBUG] manually added ord instance.
-
-instance Eq CInt where 
-   --(CInt x1) == (CInt x2) = trace ("x1:" ++ show x1 ++ " x2:" ++ show x2 ++ " x1==x2:" ++ show (x1 == x2)) x1 == x2 
-   (CInt x1) == (CInt x2) = x1 == x2 
-instance Ord CInt where 
-   (CInt x1) `compare` (CInt x2) = x1 `compare` x2 
-   --(CInt x1) `compare` (CInt x2) = trace ("x1:" ++ show x1 ++ " x2:" ++ show x2 ++ " x1==x2:" ++ show (x1 `compare` x2)) x1 `compare` x2 
+INSTANCE_EQ(CInt)
+INSTANCE_ORD(CInt)
 #else
 INTEGRAL_TYPE(CInt,tyConCInt,"CInt",HTYPE_INT)
 #endif

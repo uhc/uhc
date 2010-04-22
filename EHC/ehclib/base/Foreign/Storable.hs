@@ -65,7 +65,7 @@ import Hugs.Storable
 #ifdef __UHC__
 import UHC.Ptr
 import UHC.Storable
-import UHC.Int -- [###] Added all bellow
+import UHC.Int
 import UHC.Word
 import UHC.Ptr
 import UHC.IOBase

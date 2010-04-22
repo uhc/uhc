@@ -111,7 +111,6 @@ we define _SYS_REENT_H_, which prevents sys/reent.h to be expanded.
 
 #undef errno
 -}
-import Debug.Trace
 #endif
 
 -- this is were we get the CONST_XXX definitions from that configure
@@ -136,7 +135,7 @@ import Hugs.Prelude             ( Handle, IOError, ioError )
 import System.IO.Unsafe         ( unsafePerformIO )
 #elif __UHC__
 import UHC.IOBase
-import UHC.Base   -- [###] Added
+import UHC.Base
 #else
 import System.IO                ( Handle )
 import System.IO.Error          ( IOError, ioError )
@@ -373,17 +372,14 @@ throwErrnoIf_ pred loc f  = void $ throwErrnoIf pred loc f
 -- error code 'eINTR' - this amounts to the standard retry loop for
 -- interrupted POSIX system calls.
 --
--- [DEBUG]
 throwErrnoIfRetry            :: (a -> Bool) -> String -> IO a -> IO a
-throwErrnoIfRetry pred loc f  = --throwErrnoIf pred loc f [DEBUG]
+throwErrnoIfRetry pred loc f  = 
   do
     res <- f
     let x = pred res
-    --trace ("throwErrnoIfRetry1 | pred res=" ++ show x) return ()
     if pred res
       then do
         err <- getErrno
-        --trace ("throwErrnoIfRetry2 " ++ show (err == eINTR)) return ()
         if err == eINTR
           then throwErrnoIfRetry pred loc f
           else throwErrno loc
@@ -444,14 +440,8 @@ throwErrnoIfMinus1Retry  = throwErrnoIfRetry (== -1)
 
 -- | as 'throwErrnoIfMinus1', but discards the result.
 --
---[DEBUG added Show]
 throwErrnoIfMinus1Retry_ :: Num a => String -> IO a -> IO ()
---throwErrnoIfMinus1Retry_  = throwErrnoIfRetry_ (== -1)
-throwErrnoIfMinus1Retry_  loc comp = do
-  --trace ("throwErrnoIfMinus1Retry_ " ++ loc) return ()
-  --x <- comp
-  --trace ("throwErrnoIfMinus1Retry_ " ++ show (x == -1)) return ()
-  throwErrnoIfRetry_ (== -1) loc comp
+throwErrnoIfMinus1Retry_  = throwErrnoIfRetry_ (== -1)
 
 -- | as 'throwErrnoIfMinus1Retry', but checks for operations that would block.
 --
@@ -525,6 +515,13 @@ throwErrnoPathIfMinus1_  = throwErrnoPathIf_ (== -1)
 -- conversion of an "errno" value into IO error
 -- --------------------------------------------
 
+{-
+Currently this function defines only the supported error types. All unsupported
+errors are replaced by OtherError. This behaviour is not always sane as
+some functions might relly on getting a specific error; but for this moment
+all is good.
+The correct errors are put as comments (taken from ghc)
+-}
 -- | Construct a Haskell 98 I\/O error based on the given 'Errno' value.
 -- The optional information can be used to improve the accuracy of
 -- error messages.
@@ -536,12 +533,6 @@ errnoToIOError  :: String       -- ^ the location where the error occurred
                 -> IOError
 errnoToIOError loc errno maybeHdl maybeName = unsafePerformIO $ do
     str <- strerror errno >>= peekCString
-{-
-[###] Added definition for __UHC__. This corrects the function because its users
-expect that the error will have the coressponding type. In the old implementation
-it always retuned a USER type error. This cause problem when dealing with directory
-creation which tests if the current directory exits.
--}
 #if defined(__GLASGOW_HASKELL__) || defined(__UHC__)
     return (IOError maybeHdl errType loc str maybeName)
     where

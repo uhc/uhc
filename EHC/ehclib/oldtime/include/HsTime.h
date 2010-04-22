@@ -31,6 +31,10 @@
 #include <sys/timeb.h>
 #endif
 
+char **tzname_aux ( void )
+{ return tzname; }
+
+
 extern long *__hscore_timezone( void );
 extern char **__hscore_tzname( void );
 
