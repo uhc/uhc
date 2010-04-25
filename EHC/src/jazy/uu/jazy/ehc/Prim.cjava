@@ -895,9 +895,17 @@ PRIM GB_NodePtr gb_primOpenFileOrStd( GB_NodePtr nmNd, GB_Word modeEnum, GB_Node
 		fileDescriptorTable.add(new Handle(System.err));
 	}
 
+	// test whether a file descriptor refers to a terminal
     public static Object isatty(int fd) {
-		// Java does not seem to have any support for terminal I/O at all, so we always return false
-		return ioReturn(new Integer(0));
+		Handle handle = fileDescriptorTable.getHandle(fd);
+		int val = 0;
+		if (handle == null)
+			errno = Errno.EBADF; // fd is invalid
+		else if (handle.file != null)
+			errno = Errno.EINVAL; // it's not a terminal
+		else
+			val = 1;
+		return ioReturn(new Integer(val));
     }
 
 	public static int __hscore_bufsiz() {
