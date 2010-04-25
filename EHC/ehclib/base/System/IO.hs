@@ -260,7 +260,7 @@ putStr s        =  hPutStr stdout s
 -- | The same as 'putStr', but adds a newline character.
 
 putStrLn        :: String -> IO ()
-putStrLn s      =  do putStr s
+putStrLn s      =  do putStr s 
                       putChar '\n'
 
 -- | The 'print' function outputs a value of any printable type to the

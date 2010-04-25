@@ -410,17 +410,17 @@ allocateBuffer sz state = IO $ \s ->
    -- We sometimes need to pass the address of this buffer to
    -- a "safe" foreign call, hence it must be immovable.
   case newPinnedByteArray sz s of { ( s', b ) ->
-  ( s', newEmptyBuffer b state sz ) }
+  s' `seq` ( s', newEmptyBuffer b state sz ) }
 
 writeCharIntoBuffer :: RawBuffer -> Int -> Char -> IO Int
 writeCharIntoBuffer slab off c
   = IO $ \s -> case writeCharArray slab off c s of 
-               s' -> ( s', off + 1 )
+               s' -> s' `seq` ( s', off + 1 )
 
 readCharFromBuffer :: RawBuffer -> Int -> IO (Char, Int)
 readCharFromBuffer slab off
   = IO $ \s -> case readCharArray slab off s of 
-                 ( s', c ) -> ( s', ( c,  off + 1) )
+                 ( s', c ) -> s' `seq` ( s', ( c,  off + 1) )
 
 getBuffer :: FD -> BufferState -> IO (IORef Buffer, BufferMode)
 getBuffer fd state = do

@@ -4,7 +4,8 @@
 
 %%[99
 module UHC.IOBase
-  ( unsafePerformIO,
+  ( traceBuf,
+    unsafePerformIO,
   
         -- To and from from ST
     stToIO, ioToST, unsafeIOToST, unsafeSTToIO,
@@ -236,6 +237,9 @@ data Buffer
         bufSize  :: !Int,
         bufState :: BufferState
   }
+
+traceBuf :: Buffer -> IO ()
+traceBuf buf = traceMBA  (bufWPtr buf) (bufBuf buf) 
 
 data BufferState = ReadBuffer | WriteBuffer deriving (Eq)
 
