@@ -27,12 +27,13 @@
 --     MODULE_NAME = Posix | Windows
 --     IS_WINDOWS  = False | True
 
+#ifndef IS_WINDOWS
 #if defined(mingw32_HOST_OS) || defined(__MINGW32__)
 #define IS_WINDOWS True
 #else
 #define IS_WINDOWS False
 #endif
-
+#endif
 
 
 module System.FilePath.MODULE_NAME

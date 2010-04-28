@@ -40,7 +40,10 @@ There are several issues in the current implementation of libraries. Some with s
   \item \textbf{GC crash}. The bug is caused by the call to \verb|print| inside the weak ptr finalizer (eg:
   
    \verb|mkWeak x x (Just (print "fin"))|). The crash occurs at the level of \verb|withHandle_'| function when trying to take the \verb|Handle__| from the \verb|MVar| (\verb|Handle.chs:175|).
+  
   \item \textbf{Nested} \verb|withHandle| \textbf{calls}. If calls to \verb|withHandle| are nested in the current implementation then a runtime error will occur "UHC.MVar.takeMVar: MVar holds nothing". This is because the first \verb|withHandle| will take the \verb|MVar| leaving it empty. When the (nested) second call will try to take the same \verb|MVar| (now empty) the program will crash since UHC does not block but fail (currently concurency is not supported). An workaround can be inspected in the implementation of \verb|hGetContents|.
+  
+  \item \textbf{Segmentation fault}. Although this is not an issue specific to the library I mention it here since it may happen when regress testing the library. Occasionally, I would say non-deterministic, running a test case will cause a segmentation fault error to occur. Workaround: re-run the test.
 \end{itemize}
 %%]
 

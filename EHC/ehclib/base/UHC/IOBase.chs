@@ -4,7 +4,7 @@
 
 %%[99
 module UHC.IOBase
-  ( traceBuf,
+  ( -- traceBuf,
     unsafePerformIO,
   
         -- To and from from ST
@@ -238,8 +238,11 @@ data Buffer
         bufState :: BufferState
   }
 
+{-
+-- This function is here for debugging purposes. It prints the content of the buffer to stderr.
 traceBuf :: Buffer -> IO ()
 traceBuf buf = traceMBA  (bufWPtr buf) (bufBuf buf) 
+-}
 
 data BufferState = ReadBuffer | WriteBuffer deriving (Eq)
 

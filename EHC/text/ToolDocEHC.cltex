@@ -1125,6 +1125,13 @@ More library modules are available, we only list those which are not fully imple
  e.g. only a minimal interface for weak pointers, finalizers, etc is available, not doing very much.
 \end{itemize}
 
+There are several known problems in the library:
+
+\begin{itemize}
+  \item Using functions that works with the internal structure of a handle (eg. @Prelude.print@ inside a weak pointer finalizer will cause the program to crash.
+  \item Nested calls of the internal function @UHC.Handle.withHandle@ will cause the program to fail. 
+\end{itemize}
+
 \subsection{Library + runtime}
 The C based backends (C, bc) use the following public domain libraries:
 

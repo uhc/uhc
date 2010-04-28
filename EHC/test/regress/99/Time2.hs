@@ -1,7 +1,7 @@
 {- ----------------------------------------------------------------------------------------
    what    : Testing System.Time
    expected: ok
-   platform: current time is dependent by the ... current time. Printing calendar time is locale dependent.
+   platform: current time depends on ... current time. Printing calendar time is environment dependent.
 ---------------------------------------------------------------------------------------- -}
 
 import System.Time

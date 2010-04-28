@@ -7,21 +7,22 @@ module Main where
 
 import System.IO
 import System.Directory
+import Debug.Trace
 
 file :: FilePath
-file = "filesForIOTesting/file1"
+file = "filesForIOTesting/file2"
 
 newFile :: FilePath
-newFile = "filesForIOTesting/newFile"
+newFile = "filesForIOTesting/newFileName"
 
 main :: IO ()
-main
+main =
   do c <- readFile file
-     putStrlLn c
-     writeFile  c newFile
-     appendFile c newFile
+     putStrLn c
+     writeFile  newFile c
+     appendFile newFile c
      c' <- readFile newFile
-     print (c' = c ++ c)
+     print (c' == c ++ c)
      removeFile newFile
 
      h <- openFile file ReadMode
@@ -36,7 +37,4 @@ main
      
      hIsOpen h     >>= print
      hIsClosed h   >>= print
-     hIsReadable h >>= print
-     hIsWritable h >>= print
-     hIsSeekable h >>= print
 
