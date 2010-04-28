@@ -34,7 +34,7 @@ TEXT_SUBS					+= AGMiniPrimer StoryIntro StoryEH1 StoryEH2 StoryAFP Scratch \
 								SlidesIntro Slides SlidesPartTySig SlidesExplImpl SlidesImpred SlidesRuler SlidesShuffle SlidesGRIN SlidesStatus SlidesEHCStructure SlidesUHCStructure \
 								CodeFragsExplImpl \
 								ToolDocShuffle ToolDocRuler ToolDocEHC ToolDocText2Text \
-								InternalDocEhcTechnical InternalDocEhcStructure InternalDocBuildSystem InternalDocEhcLibrary \
+								InternalDocEhcTechnical InternalDocEhcStructure InternalDocBuildSystem InternalDocEhcLibrary InternalDocJazy \
 								TopicGrinBytecode \
 								TopicCHRLocalInst \
 								TopicEHCStructure \
@@ -117,6 +117,7 @@ TEXT_SUBS					+= AGMiniPrimer StoryIntro StoryEH1 StoryEH2 StoryAFP Scratch \
 # 55: poster UHC Architecture (Siren 2009)
 # 57: the big plan, i.e. 'vision' + roadmap + directions + projects
 # 60: doc: library
+# 61: doc: Jazy backend
 # 77: scratch (article format)
 
 TEXT_SHUFFLE_ORDER	+= \
@@ -173,5 +174,6 @@ TEXT_SHUFFLE_ORDER	+= \
 		54 < 31, \
 		54 < 55, \
 		56 < 57, \
-		39 < 60
+		39 < 60, \
+		39 < 61
 		
