@@ -1,0 +1,6 @@
+This is the GitHub repository for the Utrecht Haskell Compiler (UHC). Currently
+it is a mirror for the Subversion repository at:
+https://subversion.cs.uu.nl/repos/project.UHC.pub/trunk/EHC
+
+For more information on UHC, see the Wiki at:
+http://www.cs.uu.nl/wiki/bin/view/UHC/
