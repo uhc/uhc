@@ -1,3 +1,8 @@
+As of 20120402 this mirror of the no longer used UHC svn repo will no longer be used.
+See https://github.com/UU-ComputerScience/uhc for the new active replacement of both old repos.
+
+===============================================================================================
+
 This is the GitHub repository for the Utrecht Haskell Compiler (UHC). Currently
 it is a mirror for the Subversion repository at:
 https://subversion.cs.uu.nl/repos/project.UHC.pub/trunk/EHC
